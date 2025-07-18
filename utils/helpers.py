@@ -112,8 +112,16 @@ async def get_current_user(request: Request):
 
 
 def convertDateToProperFormat(string_date: str):
+    if "." in string_date:
+        date_part, tz_part = string_date.split("+")
+        time_part, frac = date_part.split(".")
+        frac = (frac + "000000")[:6]  # pad to 6 digits
+        s_fixed = f"{time_part}.{frac}+{tz_part}"
+    else:
+        s_fixed = string_date
+
     return (
-        datetime.fromisoformat(string_date)
+        datetime.fromisoformat(s_fixed)
         .astimezone(pytz.timezone("Asia/Kolkata"))
         .strftime(TIMESTAMP_FORMAT)
     )

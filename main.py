@@ -274,7 +274,7 @@ async def generate_pdf(
             "company_gst": company_details.get("gst_no"),
             "company_pan": company_details.get("pan_no"),
             "proforma_no": proforma_invoice.get("pi_name"),
-            "pi_date": proforma_invoice.get("created_at"),
+            "pi_date": convertDateToProperFormat(proforma_invoice.get("created_at")),
             "destination": proforma_invoice.get("destination", ""),
             "delivery_date": proforma_invoice.get("delivery_date", ""),
             "payment_term": proforma_invoice.get("payment_term", "0"),
