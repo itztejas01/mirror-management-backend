@@ -13,6 +13,7 @@ import jwt
 import pytz
 from weasyprint import HTML
 from io import BytesIO
+from .supabaseClient import supabase
 
 
 def response_content(
@@ -87,25 +88,22 @@ def convertDOB(value: str) -> str:
         return value
 
 
-def verify_token(credentials: str):
-    token = credentials
+def verify_token(access_token: str):
+    token = access_token
     try:
-        # Decode and verify the JWT token
+        token_data = supabase.auth.get_user(access_token)
 
-        decoded_token = jwt.decode(
-            token,
-            SUPABASE_JWT_SECRET_KEY,
-            algorithms=[ALGORITHM],
-            options={"verify_aud": False},
-        )
-
-        return dict({"decoded_token": decoded_token, "token": token})
+        return dict({"decoded_token": token_data, "token": token})
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
         )
     except jwt.InvalidTokenError:
-
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+    except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
