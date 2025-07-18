@@ -4,8 +4,6 @@ from fastapi import HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from .constants import (
     TIMESTAMP_FORMAT,
-    ALGORITHM,
-    SUPABASE_JWT_SECRET_KEY,
     CURRENT_TIME,
 )
 from datetime import datetime
