@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Proforma Invoice - {{ form.proforma_no }}</title>
     <style>
+      @page {
+        margin: 20px;
+      }
+      .w-100 {
+        width: 100%;
+      }
       body {
         font-family: Arial, sans-serif;
         font-size: 12px;
@@ -15,14 +21,18 @@
       .container {
         max-width: 900px;
         margin: 0 auto;
-        padding: 24px;
+        /* padding: 24px; */
         background: #fff;
+      }
+      .invoice-container {
+        border: 1px solid #222;
       }
       .header {
         display: flex;
         align-items: flex-start;
         border-bottom: 2px solid #222;
-        padding-bottom: 8px;
+        padding: 10px;
+        /* padding-bottom: 8px; */
       }
       .logo {
         width: 120px;
@@ -55,16 +65,15 @@
       }
       .info-table {
         width: 100%;
-        margin-bottom: 10px;
         border: 1px solid #222;
       }
-      /* .info-table > tbody > tr > td {
-        padding: 8px;
-      } */
       .info-table td {
         font-size: 12px;
-        padding: 2px 6px;
+        /* padding: 2px 6px; */
         vertical-align: top;
+      }
+      .border-bottom {
+        border-bottom: 1px solid #222 !important;
       }
       .section-title {
         font-weight: bold;
@@ -81,6 +90,7 @@
       .items-table {
         width: 100%;
         border-collapse: collapse;
+        padding: 0px;
         /* margin: 18px 0 8px 0; */
         margin: 0;
         border: 1px solid #222;
@@ -92,7 +102,6 @@
         font-size: 12px;
       }
       .items-table th {
-        background: #eaeaea;
         font-weight: bold;
       }
       .text-center {
@@ -107,7 +116,7 @@
       }
       .totals-table td {
         font-size: 12px;
-        padding: 4px 8px;
+        /* padding: 4px 8px; */
       }
       .totals-table .label {
         text-align: right;
@@ -131,6 +140,7 @@
         padding: 8px;
       }
       .terms {
+        margin-top: 10px;
         font-size: 11px;
       }
       .footer-note {
@@ -142,199 +152,213 @@
   </head>
   <body>
     <div class="container">
-      <!-- Header -->
-      <div class="header">
-        <div class="company-details">
-          <div class="company-title">
-            {{ form.company_name or 'RISHABHDEV GLASS PVT. LTD.' }}
-          </div>
-          <div class="company-contact">
-            {{ form.company_address }}<br />
-            Mobile - {{ form.company_mobile }} .Email: {{ form.company_email }}
-          </div>
-          <div class="company-ids">
-            GST NO. : {{ form.company_gst }} &nbsp;&nbsp;&nbsp; PAN NO. : {{
-            form.company_pan or 'AALCR8612B' }}
+      <div class="invoice-container">
+        <!-- Header -->
+        <div class="header">
+          <div class="company-details">
+            <div class="company-title">
+              {{ form.company_name or 'RISHABHDEV GLASS PVT. LTD.' }}
+            </div>
+            <div class="company-contact">
+              {{ form.company_address }}<br />
+              Mobile - {{ form.company_mobile }} .Email: {{ form.company_email
+              }}
+            </div>
+            <div class="company-ids">
+              GST NO. : {{ form.company_gst }} &nbsp;&nbsp;&nbsp; PAN NO. : {{
+              form.company_pan or 'AALCR8612B' }}
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Title -->
-      <div class="proforma-title">PROFORMA INVOICE</div>
+        <!-- Title -->
+        <div class="proforma-title">PROFORMA INVOICE</div>
 
-      <!-- Info Table -->
-      <table class="info-table">
-        <tr>
-          <td
-            style="
-              width: 65%;
-              vertical-align: top;
-              border-right: 1px solid #222;
-            "
-          >
-            <div class="section-title">BILL TO :</div>
-            <div class="address-block">
-              <span class="bold">{{ form.bill_to.name or 'Kanch Mall' }}</span
-              ><br />
-              {{ form.bill_to.address or 'Shop No 2 and 3, Bileshwar Tower, M G
-              Road, Panch West, Mumbai Suburban, Maharashtra, 400080' }}<br />
-              {% if form.bill_to.phone %}Ph. No.: {{ form.bill_to.phone }}<br />{%
-              endif %} {% if form.bill_to.gst %}GST NO. : {{ form.bill_to.gst
-              }}<br />{% endif %}
-            </div>
-            <div class="section-title" style="margin-top: 10px">SHIP TO :</div>
-            <div class="address-block">
-              <span class="bold">{{ form.ship_to.name or 'Kanch Mall' }}</span
-              ><br />
-              {{ form.ship_to.address or 'Shop No 2 and 3, Bileshwar Tower, M G
-              Road, Panch West, Mumbai Suburban, Maharashtra, 400080' }}<br />
-              {% if form.ship_to.phone %}Mobile No: {{ form.ship_to.phone }}<br />{%
-              endif %}
-            </div>
-          </td>
-          <td style="width: 35%; vertical-align: top">
-            <table>
-              <tr>
-                <td class="bold">PROFORMA NO. :</td>
-                <td>{{ form.proforma_no or 'SALE - 1104' }}</td>
-              </tr>
-              <tr>
-                <td>PI Date :</td>
-                <td>{{ form.pi_date or '12/06/2025' }}</td>
-              </tr>
-              <tr>
-                <td>Destination :</td>
-                <td>{{ form.destination or 'MULUND' }}</td>
-              </tr>
-              <tr>
-                <td>Delivery Date :</td>
-                <td>{{ form.delivery_date }}</td>
-              </tr>
-              <tr>
-                <td>Payment Term :</td>
-                <td>0</td>
-              </tr>
-              <tr>
-                <td>Revise by :</td>
-                <td>{{ form.revise_by }}</td>
-              </tr>
-              <tr>
-                <td>Transport :</td>
-                <td>Customer</td>
-              </tr>
-              <tr>
-                <td>Unloading :</td>
-                <td>Customer</td>
-              </tr>
-              <tr>
-                <td>Sales Person :</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td>Vehicle No :</td>
-                <td>0</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Items Table -->
-      <table class="items-table">
-        <thead>
+        <!-- Info Table -->
+        <table class="info-table">
           <tr>
-            <th class="text-center" rowspan="2">SR.NO.</th>
-            <th class="text-center" rowspan="2">ITEM NAME</th>
-            <th class="text-center" rowspan="2">WT(KG)</th>
-            <th class="text-center" colspan="2">ACTUAL SIZE</th>
-            <th class="text-center" rowspan="2">QTY</th>
-            <th class="text-center" rowspan="2">RATE</th>
-            <th class="text-center" rowspan="2">AMOUNT</th>
-          </tr>
-          <tr>
-            <th class="text-center">WIDTH</th>
-            <th class="text-center">HEIGHT</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in form.proforma_items %}
-          <tr>
-            <td class="text-center">{{ loop.index }}</td>
-            <td class="text-center">{{ item.name }}</td>
-            <td class="text-center">{{ item.weight }}</td>
-            <td class="text-center">{{ item.width }} {{ item.unit or '' }}</td>
-            <td class="text-center">{{ item.height }} {{ item.unit or '' }}</td>
-            <td class="text-center">{{ item.qty }}</td>
-            <td class="text-center">
-              {{ item.rate }} {{ item.rate_type or '' }}
-            </td>
-            <td class="text-center">{{ '%.2f'|format(item.amount) }}</td>
-          </tr>
-          {% endfor %}
-          <tr>
-            <td colspan="5" class="text-right bold">Total</td>
-            <td class="text-center bold">{{ form.total_qty }}</td>
-            <td></td>
-            <td class="text-center bold">
-              {{ '%.2f'|format(form.basic_total) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Remarks and Totals -->
-      <table style="width: 100%; margin-top: 18px">
-        <tbody>
-          <tr>
-            <td style="width: 55%; vertical-align: top">
-              <div class="remarks">
-                <div class="bold">Remarks :</div>
-                <div>{{ form.remarks or '' }}</div>
-                <div style="margin-top: 8px">
-                  Weight in KG :
-                  <span class="bold">{{ form.total_weight }}</span>
-                </div>
+            <td
+              style="
+                width: 60%;
+                vertical-align: top;
+                border-right: 1px solid #222;
+              "
+            >
+              <div class="section-title">BILL TO :</div>
+              <div
+                class="address-block"
+                style="padding-bottom: 30px; border-bottom: 1px solid #222"
+              >
+                <span class="bold">{{ form.bill_to.name or 'Kanch Mall' }}</span
+                ><br />
+                {{ form.bill_to.address or 'Shop No 2 and 3, Bileshwar Tower, M
+                G Road, Panch West, Mumbai Suburban, Maharashtra, 400080' }}<br />
+                {% if form.bill_to.phone %}Ph. No.: {{ form.bill_to.phone }}<br />{%
+                endif %} {% if form.bill_to.gst %}GST NO. : {{ form.bill_to.gst
+                }}<br />{% endif %}
+              </div>
+              <div class="section-title" style="margin-top: 10px">
+                SHIP TO :
+              </div>
+              <div class="address-block">
+                <span class="bold">{{ form.ship_to.name or 'Kanch Mall' }}</span
+                ><br />
+                {{ form.ship_to.address or 'Shop No 2 and 3, Bileshwar Tower, M
+                G Road, Panch West, Mumbai Suburban, Maharashtra, 400080' }}<br />
+                {% if form.ship_to.phone %}Mobile No: {{ form.ship_to.phone
+                }}<br />{% endif %}
               </div>
             </td>
-            <td style="width: 45%; vertical-align: top">
-              <table class="totals-table">
-                <tbody>
-                  <tr>
-                    <td class="label">Basic Total</td>
-                    <td class="amount">
-                      {{ '%.2f'|format(form.basic_total) }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="label">Total</td>
-                    <td class="amount">
-                      {{ '%.2f'|format(form.basic_total) }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="label">CGST 9.00 %</td>
-                    <td class="amount">{{ '%.2f'|format(form.cgst) }}</td>
-                  </tr>
-                  <tr>
-                    <td class="label">SGST 9.00 %</td>
-                    <td class="amount">{{ '%.2f'|format(form.sgst) }}</td>
-                  </tr>
-                  <tr class="grand">
-                    <td class="label">Total : Add GST 18%</td>
-                    <td class="amount">{{ '%.2f'|format(form.total_gst) }}</td>
-                  </tr>
-                  <tr class="grand">
-                    <td class="label">Grand Total</td>
-                    <td class="amount">
-                      {{ '%.2f'|format(form.grand_total) }}
-                    </td>
-                  </tr>
-                </tbody>
+            <td style="width: 40%; vertical-align: top">
+              <table class="w-100">
+                <tr>
+                  <td class="bold border-bottom">PROFORMA NO. :</td>
+                  <td class="border-bottom">{{ form.proforma_no }}</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">PI Date :</td>
+                  <td class="border-bottom">{{ form.pi_date }}</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Destination :</td>
+                  <td class="border-bottom">{{ form.destination }}</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Delivery Date :</td>
+                  <td class="border-bottom">{{ form.delivery_date }}</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Payment Term :</td>
+                  <td class="border-bottom">0</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Revise by :</td>
+                  <td class="border-bottom">{{ form.revise_by }}</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Transport :</td>
+                  <td class="border-bottom">Customer</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Unloading :</td>
+                  <td class="border-bottom">Customer</td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Sales Person :</td>
+                  <td class="border-bottom"></td>
+                </tr>
+                <tr>
+                  <td class="bold border-bottom">Vehicle No :</td>
+                  <td class="border-bottom">0</td>
+                </tr>
               </table>
             </td>
           </tr>
-        </tbody>
-      </table>
+        </table>
+
+        <!-- Items Table -->
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th class="text-center" rowspan="2">SR.NO.</th>
+              <th rowspan="2">ITEM NAME</th>
+              <th class="text-center" rowspan="2">WT(KG)</th>
+              <th class="text-center" colspan="2">ACTUAL SIZE</th>
+              <th class="text-center" rowspan="2">QTY</th>
+              <th class="text-center" rowspan="2">RATE</th>
+              <th class="text-center" rowspan="2">AMOUNT</th>
+            </tr>
+            <tr>
+              <th class="text-center">WIDTH</th>
+              <th class="text-center">HEIGHT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in form.proforma_items %}
+            <tr>
+              <td class="text-center">{{ loop.index }}</td>
+              <td>{{ item.name }}</td>
+              <td class="text-center">{{ item.weight }}</td>
+              <td class="text-center">
+                {{ item.width }} {{ item.unit or '' }}
+              </td>
+              <td class="text-center">
+                {{ item.height }} {{ item.unit or '' }}
+              </td>
+              <td class="text-center">{{ item.qty }}</td>
+              <td class="text-center">
+                {{ item.rate }} {{ item.rate_type or '' }}
+              </td>
+              <td class="text-center">{{ '%.2f'|format(item.amount) }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+              <td colspan="5" class="text-right bold"></td>
+              <td class="text-center bold">{{ form.total_qty }}</td>
+              <td class="text-right bold">Total:</td>
+              <td class="text-center bold">
+                {{ '%.2f'|format(form.basic_total) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Remarks and Totals -->
+        <table style="width: 100%; margin-top: 18px">
+          <tbody>
+            <tr>
+              <td style="width: 55%; vertical-align: top">
+                <div class="remarks">
+                  <div class="bold">Remarks :</div>
+                  <div>{{ form.remarks or '' }}</div>
+                  <div style="margin-top: 8px">
+                    Weight in KG :
+                    <span class="bold">{{ form.total_weight }}</span>
+                  </div>
+                </div>
+              </td>
+              <td style="width: 45%; vertical-align: top">
+                <table class="totals-table">
+                  <tbody>
+                    <tr>
+                      <td class="label">Basic Total</td>
+                      <td class="amount">
+                        {{ '%.2f'|format(form.basic_total) }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="label">Total</td>
+                      <td class="amount">
+                        {{ '%.2f'|format(form.basic_total) }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="label">CGST 9.00 %</td>
+                      <td class="amount">{{ '%.2f'|format(form.cgst) }}</td>
+                    </tr>
+                    <tr>
+                      <td class="label">SGST 9.00 %</td>
+                      <td class="amount">{{ '%.2f'|format(form.sgst) }}</td>
+                    </tr>
+                    <tr class="grand">
+                      <td class="label">Total : Add GST 18%</td>
+                      <td class="amount">
+                        {{ '%.2f'|format(form.total_gst) }}
+                      </td>
+                    </tr>
+                    <tr class="grand">
+                      <td class="label">Grand Total</td>
+                      <td class="amount">
+                        {{ '%.2f'|format(form.grand_total) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Bank Details -->
       <div class="bank-details">
@@ -347,7 +371,9 @@
 
       <!-- Terms & Conditions -->
       <div class="terms">
-        <b>Terms & Conditions</b><br />
+        <span class="bold" style="text-decoration: underline"
+          >Terms & Conditions</span
+        ><br />
         {% for term in form.terms %} {{ loop.index }}) {{ term }}<br />
         {% endfor %}
       </div>

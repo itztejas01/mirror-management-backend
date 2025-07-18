@@ -14,6 +14,7 @@ from utils.supabaseClient import supabase
 from utils.constants import (
     SUPABASE_TABLES,
     CURRENT_TIME,
+    RATE_TYPE,
 )
 from datetime import timedelta, datetime
 from utils.schema import UserLoginSchema
@@ -251,7 +252,7 @@ async def generate_pdf(
                 "rate": item.get("rate", 0),
                 "unit": item.get("unit", ""),
                 "amount": item.get("amount", 0),
-                "rate_type": item.get("rate_type", ""),
+                "rate_type": RATE_TYPE[item.get("rate_type", "")],
             }
             for item in items
         ]

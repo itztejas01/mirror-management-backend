@@ -33,3 +33,14 @@ class SUPABASE_TABLES:
     thickness_master = "thickness_master"
     users = "users"
     company_details = "company_master"
+
+
+RATE_TYPE = {
+    "per_sq_mm": "MM",
+    "per_sq_ft": "SQFT",
+    "per_sq_m": "SQM",
+    "per_sq_yd": "SQYD",
+    "per_sq_in": "SQIN",
+    "per_sq_cm": "SQCM",
+    "per_sq_m": "SQM",
+}
