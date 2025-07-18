@@ -32,3 +32,4 @@ class SUPABASE_TABLES:
     proforma_invoice_items = "proforma_items"
     thickness_master = "thickness_master"
     users = "users"
+    company_details = "company_master"

@@ -25,7 +25,7 @@ import re
 app = FastAPI()
 origins = ["*"]
 # handler = Mangum(app)
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="template")
 
 app.add_middleware(
     CORSMiddleware,
@@ -198,6 +198,18 @@ async def generate_pdf(
 ):
     # print("Generating invoice for order_id: ", SUPABASE_URL, SUPABASE_ANON_KEY)
     try:
+        company_details = (
+            supabase.table(SUPABASE_TABLES.company_details)
+            .select("*")
+            .eq("id", 1)
+            .execute()
+        )
+
+        if len(company_details.data) == 0:
+            return failure_response("Company details not found", {}, 404)
+
+        company_details = company_details.data[0]
+
         order = (
             supabase.table(SUPABASE_TABLES.orders)
             .select(
@@ -207,7 +219,7 @@ async def generate_pdf(
                     {SUPABASE_TABLES.proforma_invoice_items}:{SUPABASE_TABLES.proforma_invoice_items}(*,
                     {SUPABASE_TABLES.products}:{SUPABASE_TABLES.products}(name,sku),
                     {SUPABASE_TABLES.thickness_master}:{SUPABASE_TABLES.thickness_master}(name,value,multiplier))),
-                    {SUPABASE_TABLES.customers}:{SUPABASE_TABLES.customers}(name,company_name,gstin,phone,email)
+                    {SUPABASE_TABLES.customers}:{SUPABASE_TABLES.customers}(name,company_name,gstin,phone,email,address)
                     )
                     """
             )
@@ -220,7 +232,93 @@ async def generate_pdf(
 
         order_data = order.data[0]
 
-        return success_response("Invoice generated successfully", order_data, 200)
+        proforma_invoice = order_data["proforma_invoices"]
+        customer = order_data["customers"]
+        items = proforma_invoice.get("proforma_items", [])
+
+        # Calculate totals
+        total_qty = sum(item.get("quantity", 0) for item in items)
+        total_weight = sum(item.get("weight", 0) for item in items)
+
+        # Process items
+        processed_items = [
+            {
+                "name": item.get("products", {}).get("name", ""),
+                "weight": f'{item.get("weight", 0):.2f}',
+                "width": item.get("size_width", ""),
+                "height": item.get("size_height", ""),
+                "qty": item.get("quantity", 0),
+                "rate": item.get("rate", 0),
+                "unit": item.get("unit", ""),
+                "amount": item.get("amount", 0),
+                "rate_type": item.get("rate_type", ""),
+            }
+            for item in items
+        ]
+
+        # Calculate GST
+        is_gst = proforma_invoice.get("is_gst", False)
+        total_gst = proforma_invoice.get("gst_amount", 0)
+        cgst = total_gst / 2 if is_gst else 0
+        sgst = total_gst / 2 if is_gst else 0
+
+        print("proforma_invoice.get('created_at')", processed_items)
+
+        form_data = {
+            "company_logo": company_details.get("logo"),
+            "company_name": company_details.get("company_name"),
+            "company_address": company_details.get("address"),
+            "company_mobile": ", ".join(company_details.get("mobile_nos", [])),
+            "company_email": company_details.get("email_id"),
+            "company_gst": company_details.get("gst_no"),
+            "company_pan": company_details.get("pan_no"),
+            "proforma_no": proforma_invoice.get("pi_name"),
+            "pi_date": proforma_invoice.get("created_at"),
+            "destination": proforma_invoice.get("destination", ""),
+            "delivery_date": proforma_invoice.get("delivery_date", ""),
+            "payment_term": proforma_invoice.get("payment_term", "0"),
+            "revise_by": proforma_invoice.get("revise_by", ""),
+            "transport": proforma_invoice.get("transport", "Customer"),
+            "unloading": proforma_invoice.get("unloading", "Customer"),
+            "sales_person": proforma_invoice.get("sales_person", ""),
+            "vehicle_no": proforma_invoice.get("vehicle_no", "0"),
+            "bill_to": {
+                "name": customer.get("company_name") or customer.get("name"),
+                "address": customer.get("address"),
+                "phone": customer.get("phone"),
+                "gst": customer.get("gstin"),
+            },
+            "ship_to": {
+                "name": customer.get("company_name") or customer.get("name"),
+                "address": customer.get("address"),
+                "phone": customer.get("phone"),
+            },
+            "proforma_items": processed_items,
+            "total_qty": total_qty,
+            "basic_total": proforma_invoice.get("total_amount", 0),
+            "remarks": proforma_invoice.get("remarks", ""),
+            "total_weight": f"{total_weight:.2f}",
+            "cgst": cgst,
+            "sgst": sgst,
+            "total_gst": total_gst if is_gst else 0,
+            "grand_total": proforma_invoice.get("grand_total", 0),
+            "bank_name": company_details.get("bank_account_name"),
+            "bank": company_details.get("bank_name"),
+            "branch": company_details.get("branch", ""),
+            "account_no": company_details.get("bank_account_no"),
+            "ifsc": company_details.get("ifsc_code"),
+            "terms": company_details.get("terms_and_conditions", []),
+        }
+
+        pdf_context = {"form": form_data}
+
+        print("pdf_context: ", pdf_context)
+
+        pdf_bytes = createPdf(pdf_context, templates, "invoice.html")
+
+        print("PDF generated successfully")
+
+        return Response(content=pdf_bytes, media_type="application/pdf")
     except Exception as e:
         print(e)
         return failure_response(str(e), {}, 500)

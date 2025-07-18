@@ -126,21 +126,17 @@ def convertDateToProperFormat(string_date: str):
 def createPdf(data, templates, template_to_choose):
     try:
         print(f"Creating PDF with template: {template_to_choose}")
-        form_data = dict(
-            {
-                **data,
-                "date": CURRENT_TIME.strftime(TIMESTAMP_FORMAT),
-                "current_year": CURRENT_TIME.year,
-                # "enterprise_name": "Human ventures",
-                # "office_address": "91 Springboard BKC Kalina, Behind Metro House, CST Rd., Bandra Kurla Complex, Santacruz (E) Mumbai 400098.",
-                # "image": MUDRA_YOJANA_BASE64,
-            }
-        )
+        context = {
+            **data,
+            "date": CURRENT_TIME.strftime(TIMESTAMP_FORMAT),
+            "current_year": CURRENT_TIME.year,
+        }
 
         template = templates.get_template(template_to_choose)
+
         print("Template loaded successfully")
 
-        html_content = template.render(form=form_data)
+        html_content = template.render(context)
         print("HTML content rendered successfully")
 
         pdf_bytes = BytesIO()
@@ -153,4 +149,4 @@ def createPdf(data, templates, template_to_choose):
     except Exception as e:
         print(f"Error in createPdf: {str(e)}")
         print(f"Template: {template_to_choose}")
-        raise
+        raise e

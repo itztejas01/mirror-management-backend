@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Proforma Invoice - {{ form.proforma_no }}</title>
     <style>
       body {
@@ -81,9 +80,8 @@
       .items-table {
         width: 100%;
         border-collapse: collapse;
-        /* margin: 18px 0 8px 0; */
-        margin: 0;
-        border: 1px solid #222;
+        margin: 18px 0 8px 0;
+        border: 2px solid #222;
       }
       .items-table th,
       .items-table td {
@@ -102,8 +100,10 @@
         text-align: right;
       }
       .totals-table {
-        width: 100%;
+        width: 350px;
+        float: right;
         border-collapse: collapse;
+        margin-top: 8px;
       }
       .totals-table td {
         font-size: 12px;
@@ -124,6 +124,7 @@
       .remarks,
       .bank-details,
       .terms {
+        margin-top: 18px;
         font-size: 12px;
       }
       .bank-details {
@@ -144,22 +145,35 @@
     <div class="container">
       <!-- Header -->
       <div class="header">
+        <div class="logo">
+          {% if form.company_logo %}
+          <img src="{{ form.company_logo }}" alt="Logo" style="width: 100px" />
+          {% else %}
+          <img
+            src="https://i.imgur.com/0y0y0y0.png"
+            alt="Logo"
+            style="width: 100px"
+          />
+          <!-- Placeholder -->
+          {% endif %}
+        </div>
         <div class="company-details">
           <div class="company-title">
             {{ form.company_name or 'RISHABHDEV GLASS PVT. LTD.' }}
           </div>
           <div class="company-contact">
-            {{ form.company_address }}<br />
-            Mobile - {{ form.company_mobile }} .Email: {{ form.company_email }}
+            {{ form.company_address or 'SHOP NO 1&2, PLOT NO B-42, MIDC PHASE 2,
+            OPP W-259 SAGARLI, SAGAON DOMBIVLI EAST 421203' }}<br />
+            Mobile - {{ form.company_mobile or '9713121121' }} .Email: {{
+            form.company_email or 'rishabhdevglass2022@gmail.com' }}
           </div>
           <div class="company-ids">
-            GST NO. : {{ form.company_gst }} &nbsp;&nbsp;&nbsp; PAN NO. : {{
-            form.company_pan or 'AALCR8612B' }}
+            GST NO. : {{ form.company_gst or '27AALCR8612B1ZE' }}
+            &nbsp;&nbsp;&nbsp; PAN NO. : {{ form.company_pan or 'AALCR8612B' }}
           </div>
         </div>
       </div>
 
-      <!-- Title -->
       <div class="proforma-title">PROFORMA INVOICE</div>
 
       <!-- Info Table -->
@@ -246,7 +260,7 @@
             <th class="text-center" rowspan="2">SR.NO.</th>
             <th class="text-center" rowspan="2">ITEM NAME</th>
             <th class="text-center" rowspan="2">WT(KG)</th>
-            <th class="text-center" colspan="2">ACTUAL SIZE</th>
+            <th class="text-center" colspan="2">ACTUAL SIZE MM</th>
             <th class="text-center" rowspan="2">QTY</th>
             <th class="text-center" rowspan="2">RATE</th>
             <th class="text-center" rowspan="2">AMOUNT</th>
@@ -257,84 +271,76 @@
           </tr>
         </thead>
         <tbody>
-          {% for item in form.proforma_items %}
+          {% for item in form.items %}
           <tr>
             <td class="text-center">{{ loop.index }}</td>
             <td class="text-center">{{ item.name }}</td>
             <td class="text-center">{{ item.weight }}</td>
-            <td class="text-center">{{ item.width }} {{ item.unit or '' }}</td>
-            <td class="text-center">{{ item.height }} {{ item.unit or '' }}</td>
+            <td class="text-center">{{ item.width }}</td>
+            <td class="text-center">{{ item.height }}</td>
             <td class="text-center">{{ item.qty }}</td>
-            <td class="text-center">
-              {{ item.rate }} {{ item.rate_type or '' }}
-            </td>
+            <td class="text-center">{{ item.rate }} {{ item.unit or '' }}</td>
             <td class="text-center">{{ '%.2f'|format(item.amount) }}</td>
           </tr>
           {% endfor %}
           <tr>
             <td colspan="5" class="text-right bold">Total</td>
-            <td class="text-center bold">{{ form.total_qty }}</td>
+            <td class="text-center bold">{{ form.total_qty or '24' }}</td>
             <td></td>
             <td class="text-center bold">
-              {{ '%.2f'|format(form.basic_total) }}
+              {{ '%.2f'|format(form.basic_total or 99452.13) }}
             </td>
           </tr>
         </tbody>
       </table>
 
       <!-- Remarks and Totals -->
-      <table style="width: 100%; margin-top: 18px">
-        <tbody>
-          <tr>
-            <td style="width: 55%; vertical-align: top">
-              <div class="remarks">
-                <div class="bold">Remarks :</div>
-                <div>{{ form.remarks or '' }}</div>
-                <div style="margin-top: 8px">
-                  Weight in KG :
-                  <span class="bold">{{ form.total_weight }}</span>
-                </div>
-              </div>
-            </td>
-            <td style="width: 45%; vertical-align: top">
-              <table class="totals-table">
-                <tbody>
-                  <tr>
-                    <td class="label">Basic Total</td>
-                    <td class="amount">
-                      {{ '%.2f'|format(form.basic_total) }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="label">Total</td>
-                    <td class="amount">
-                      {{ '%.2f'|format(form.basic_total) }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="label">CGST 9.00 %</td>
-                    <td class="amount">{{ '%.2f'|format(form.cgst) }}</td>
-                  </tr>
-                  <tr>
-                    <td class="label">SGST 9.00 %</td>
-                    <td class="amount">{{ '%.2f'|format(form.sgst) }}</td>
-                  </tr>
-                  <tr class="grand">
-                    <td class="label">Total : Add GST 18%</td>
-                    <td class="amount">{{ '%.2f'|format(form.total_gst) }}</td>
-                  </tr>
-                  <tr class="grand">
-                    <td class="label">Grand Total</td>
-                    <td class="amount">
-                      {{ '%.2f'|format(form.grand_total) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div style="display: flex; justify-content: space-between">
+        <div class="remarks" style="width: 50%">
+          <div class="bold">Remarks :</div>
+          <div>{{ form.remarks or '' }}</div>
+          <div style="margin-top: 8px">
+            Weight in KG :
+            <span class="bold">{{ form.total_weight or '2617' }}</span>
+          </div>
+        </div>
+        <div style="width: 45%">
+          <table class="totals-table">
+            <tr>
+              <td class="label">Basic Total</td>
+              <td class="amount">
+                {{ '%.2f'|format(form.basic_total or 99452.13) }}
+              </td>
+            </tr>
+            <tr>
+              <td class="label">Total</td>
+              <td class="amount">
+                {{ '%.2f'|format(form.basic_total or 99452.13) }}
+              </td>
+            </tr>
+            <tr>
+              <td class="label">CGST 9.00 %</td>
+              <td class="amount">{{ '%.2f'|format(form.cgst or 8951.00) }}</td>
+            </tr>
+            <tr>
+              <td class="label">SGST 9.00 %</td>
+              <td class="amount">{{ '%.2f'|format(form.sgst or 8951.00) }}</td>
+            </tr>
+            <tr class="grand">
+              <td class="label">Total : Add GST 18%</td>
+              <td class="amount">
+                {{ '%.2f'|format(form.total_gst or 17902.00) }}
+              </td>
+            </tr>
+            <tr class="grand">
+              <td class="label">Grand Total</td>
+              <td class="amount">
+                {{ '%.2f'|format(form.grand_total or 117354.00) }}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
 
       <!-- Bank Details -->
       <div class="bank-details">
