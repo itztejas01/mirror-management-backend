@@ -16,8 +16,7 @@ from utils.constants import (
     CURRENT_TIME,
 )
 from datetime import timedelta, datetime
-
-
+from utils.schema import UserLoginSchema
 import re
 
 
@@ -169,6 +168,30 @@ async def get_stats():
         return failure_response(str(e), {}, 500)
 
 
+@app.post("/login")
+async def login(data: UserLoginSchema):
+    try:
+        data = supabase.auth.sign_in_with_password(
+            credentials={"email": data.email, "password": data.password}
+        )
+
+        access_token = data.session.access_token
+        refresh_token = data.session.refresh_token
+        token_type = data.session.token_type
+        identity_data = data.user.identities[0].identity_data
+        user_data = {
+            **identity_data,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": token_type,
+        }
+
+        return success_response("Login successful", user_data, 200)
+    except Exception as e:
+        print(e)
+        return failure_response(str(e), {}, 500)
+
+
 @app.get("/invoice/{order_id}")
 async def generate_pdf(
     order_id: str,
@@ -197,24 +220,6 @@ async def generate_pdf(
 
         order_data = order.data[0]
 
-        # order_items = order_data["order_items"]
-        # customer_data = order_data["customer_master"]
-        # company_data = order_data["company_master"]
-
-        # pdf_data = {
-        #     "order_id": order_data["id"],
-        #     "order_no": order_data["order_no"],
-        #     "order_total": order_data["total_value"],
-        #     "order_date": convertDateToProperFormat(order_data["created_at"]),
-        #     "customer_data": customer_data,
-        #     "company_data": company_data,
-        #     "order_items": order_items,
-        #     "qr_code": QR_CODE,
-        # }
-
-        # pdf_bytes = createPdf(pdf_data, templates, "invoice.html")
-
-        # return Response(content=pdf_bytes, media_type="application/pdf")
         return success_response("Invoice generated successfully", order_data, 200)
     except Exception as e:
         print(e)

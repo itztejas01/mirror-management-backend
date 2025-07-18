@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Proforma Invoice - {{ form.proforma_no }}</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: #222;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 24px;
+        background: #fff;
+      }
+      .header {
+        display: flex;
+        align-items: flex-start;
+        border-bottom: 2px solid #222;
+        padding-bottom: 8px;
+      }
+      .logo {
+        width: 120px;
+        margin-right: 24px;
+      }
+      .company-details {
+        flex: 1;
+      }
+      .company-title {
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 1px;
+      }
+      .company-contact {
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .company-ids {
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .proforma-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 18px 0 8px 0;
+        letter-spacing: 1px;
+      }
+      .info-table {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      .info-table td {
+        font-size: 12px;
+        padding: 2px 6px;
+        vertical-align: top;
+      }
+      .section-title {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .address-block {
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+      .bold {
+        font-weight: bold;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 18px 0 8px 0;
+      }
+      .items-table th,
+      .items-table td {
+        border: 1px solid #222;
+        padding: 6px 4px;
+        font-size: 12px;
+      }
+      .items-table th {
+        background: #eaeaea;
+        font-weight: bold;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .totals-table {
+        width: 350px;
+        float: right;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      .totals-table td {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      .totals-table .label {
+        text-align: right;
+        font-weight: bold;
+      }
+      .totals-table .amount {
+        text-align: right;
+      }
+      .totals-table .grand {
+        font-size: 14px;
+        font-weight: bold;
+        border-top: 2px solid #222;
+      }
+      .remarks,
+      .bank-details,
+      .terms {
+        margin-top: 18px;
+        font-size: 12px;
+      }
+      .bank-details {
+        border: 1px solid #222;
+        padding: 8px;
+        background: #f7f7f7;
+      }
+      .terms {
+        font-size: 11px;
+      }
+      .footer-note {
+        margin-top: 16px;
+        font-size: 11px;
+        color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo">
+          {% if form.company_logo %}
+          <img src="{{ form.company_logo }}" alt="Logo" style="width: 100px" />
+          {% else %}
+          <img
+            src="https://i.imgur.com/0y0y0y0.png"
+            alt="Logo"
+            style="width: 100px"
+          />
+          <!-- Placeholder -->
+          {% endif %}
+        </div>
+        <div class="company-details">
+          <div class="company-title">
+            {{ form.company_name or 'RISHABHDEV GLASS PVT. LTD.' }}
+          </div>
+          <div class="company-contact">
+            {{ form.company_address or 'SHOP NO 1&2, PLOT NO B-42, MIDC PHASE 2,
+            OPP W-259 SAGARLI,SAGAON DOMBIVLI EAST 421203' }}<br />
+            Mobile - {{ form.company_mobile or '9713121121' }} .Email: {{
+            form.company_email or 'rishabhdevglass2022@gmail.com' }}
+          </div>
+          <div class="company-ids">
+            GST NO. : {{ form.company_gst or '27AALCR8612B1ZE' }}
+            &nbsp;&nbsp;&nbsp; PAN NO. : {{ form.company_pan or 'AALCR8612B' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="proforma-title">PROFORMA INVOICE</div>
+
+      <!-- Info Table -->
+      <table class="info-table">
+        <tr>
+          <td style="width: 40%; vertical-align: top">
+            <div class="section-title">BILL TO :</div>
+            <div class="address-block">
+              <span class="bold">{{ form.bill_to.name }}</span><br />
+              {{ form.bill_to.address }}<br />
+              {% if form.bill_to.phone %}Ph.No.: {{ form.bill_to.phone }}<br />{%
+              endif %} {% if form.bill_to.gst %}GST NO. : {{ form.bill_to.gst
+              }}<br />{% endif %}
+            </div>
+          </td>
+          <td style="width: 30%; vertical-align: top">
+            <div class="section-title">SHIP TO :</div>
+            <div class="address-block">
+              <span class="bold">{{ form.ship_to.name }}</span><br />
+              {{ form.ship_to.address }}<br />
+              {% if form.ship_to.phone %}Ph.No.: {{ form.ship_to.phone }}<br />{%
+              endif %}
+            </div>
+          </td>
+          <td style="width: 30%; vertical-align: top">
+            <table style="width: 100%; font-size: 12px">
+              <tr>
+                <td class="bold">PROFORMA NO. :</td>
+                <td>{{ form.proforma_no }}</td>
+              </tr>
+              <tr>
+                <td>PI Date :</td>
+                <td>{{ form.pi_date }}</td>
+              </tr>
+              <tr>
+                <td>Destination :</td>
+                <td>{{ form.destination }}</td>
+              </tr>
+              <tr>
+                <td>Delivery Date :</td>
+                <td>{{ form.delivery_date or '' }}</td>
+              </tr>
+              <tr>
+                <td>Payment Term :</td>
+                <td>{{ form.payment_term or '' }}</td>
+              </tr>
+              <tr>
+                <td>Revise by :</td>
+                <td>{{ form.revise_by or '' }}</td>
+              </tr>
+              <tr>
+                <td>Transport :</td>
+                <td>{{ form.transport or '' }}</td>
+              </tr>
+              <tr>
+                <td>Unloading :</td>
+                <td>{{ form.unloading or '' }}</td>
+              </tr>
+              <tr>
+                <td>Sales Person :</td>
+                <td>{{ form.sales_person or '' }}</td>
+              </tr>
+              <tr>
+                <td>Vehicle No :</td>
+                <td>{{ form.vehicle_no or '' }}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Items Table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th class="text-center">SR.NO.</th>
+            <th class="text-center">ITEM NAME</th>
+            <th class="text-center">WT(KG)</th>
+            <th class="text-center">ACTUAL SIZE MM<br />WIDTH</th>
+            <th class="text-center">ACTUAL SIZE MM<br />HEIGHT</th>
+            <th class="text-center">QTY</th>
+            <th class="text-center">RATE</th>
+            <th class="text-center">AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in form.items %}
+          <tr>
+            <td class="text-center">{{ loop.index }}</td>
+            <td class="text-center">{{ item.name }}</td>
+            <td class="text-center">{{ item.weight }}</td>
+            <td class="text-center">{{ item.width }}</td>
+            <td class="text-center">{{ item.height }}</td>
+            <td class="text-center">{{ item.qty }}</td>
+            <td class="text-center">{{ item.rate }} {{ item.unit or '' }}</td>
+            <td class="text-center">{{ '%.2f'|format(item.amount) }}</td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td colspan="5" class="text-right bold">Total</td>
+            <td class="text-center bold">{{ form.total_qty }}</td>
+            <td></td>
+            <td class="text-center bold">
+              {{ '%.2f'|format(form.basic_total) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Remarks and Totals -->
+      <div style="display: flex; justify-content: space-between">
+        <div class="remarks" style="width: 50%">
+          <div class="bold">Remarks :</div>
+          <div>{{ form.remarks or '' }}</div>
+          <div style="margin-top: 8px">
+            Weight in KG : <span class="bold">{{ form.total_weight }}</span>
+          </div>
+        </div>
+        <div style="width: 45%">
+          <table class="totals-table">
+            <tr>
+              <td class="label">Basic Total</td>
+              <td class="amount">{{ '%.2f'|format(form.basic_total) }}</td>
+            </tr>
+            <tr>
+              <td class="label">Total</td>
+              <td class="amount">{{ '%.2f'|format(form.basic_total) }}</td>
+            </tr>
+            <tr>
+              <td class="label">CGST 9.00 %</td>
+              <td class="amount">{{ '%.2f'|format(form.cgst) }}</td>
+            </tr>
+            <tr>
+              <td class="label">SGST 9.00 %</td>
+              <td class="amount">{{ '%.2f'|format(form.sgst) }}</td>
+            </tr>
+            <tr class="grand">
+              <td class="label">Total : Add GST 18%</td>
+              <td class="amount">{{ '%.2f'|format(form.total_gst) }}</td>
+            </tr>
+            <tr class="grand">
+              <td class="label">Grand Total</td>
+              <td class="amount">{{ '%.2f'|format(form.grand_total) }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bank Details -->
+      <div class="bank-details">
+        <b>Bank Details :</b> A/c Name : {{ form.bank_name or 'Rishabhdev Glass
+        Pvt. Ltd.' }} , Bank Name: {{ form.bank or 'HDFC Bank' }}, Branch: {{
+        form.branch or 'MIDC Dombivli East' }}<br />
+        A/c No:{{ form.account_no or '59209821584571' }}, IFSC Code : {{
+        form.ifsc or 'HDFC0003783' }}
+      </div>
+
+      <!-- Terms & Conditions -->
+      <div class="terms">
+        <b>Terms & Conditions</b><br />
+        1) Please Check the Glass sizes, Holes & Cutouts which is mentioned in
+        Quotation, If any changes please inform us<br />
+        2) Payment to be made only by the way of NEFT / RTGS in the name of
+        Rishabhdev Glass Pvt Ltd.<br />
+        3) No Breakage claim will be entertained if photos of breakage are not
+        provided at the time of delivery<br />
+        4) Payment 100 % advance against order.<br />
+        5) Size Tolerance can be (+,-) 2MM.<br />
+        6) Please Provide GST TIN Number.<br />
+        7) No G Pay Will be Accepted against any orders<br />
+        8) Payment is to be made as per payment terms as agreed while placing
+        the order<br />
+        9) The jurisdiction for any dispute related to sale of goods shall be
+        limited to Thane & Mumbai courts only.<br />
+      </div>
+
+      <div class="footer-note">
+        If material is ready and you did not pickup material within 7 days then
+        we will generate invoice against that material and we will not be
+        responsible for any breakage
+      </div>
+    </div>
+  </body>
+</html>
