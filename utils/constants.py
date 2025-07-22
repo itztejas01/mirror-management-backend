@@ -8,7 +8,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 
-TIMESTAMP_FORMAT = "%d-%m-%Y %I:%M %p"
+TIMESTAMP_FORMAT = "%d-%m-%Y"
 CURRENT_TIME = datetime.now()
 
 
