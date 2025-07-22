@@ -189,23 +189,20 @@
                 class="address-block"
                 style="padding-bottom: 30px; border-bottom: 1px solid #222"
               >
-                <span class="bold">{{ form.bill_to.name or 'Kanch Mall' }}</span
-                ><br />
-                {{ form.bill_to.address or 'Shop No 2 and 3, Bileshwar Tower, M
-                G Road, Panch West, Mumbai Suburban, Maharashtra, 400080' }}<br />
-                {% if form.bill_to.phone %}Ph. No.: {{ form.bill_to.phone }}<br />{%
-                endif %} {% if form.bill_to.gst %}GST NO. : {{ form.bill_to.gst
-                }}<br />{% endif %}
+                <span class="bold">{{ form.bill_to.name }}</span><br />
+                {{ form.bill_to.address }}<br />
+                {% if form.bill_to.mobile %} Ph. No.: {{ form.bill_to.phone }}
+                Mobile No.: {{ form.bill_to.mobile }}<br />
+                {% endif %} {% if form.bill_to.gst %}GST NO. : {{
+                form.bill_to.gst }}<br />{% endif %}
               </div>
               <div class="section-title" style="margin-top: 10px">
                 SHIP TO :
               </div>
               <div class="address-block">
-                <span class="bold">{{ form.ship_to.name or 'Kanch Mall' }}</span
-                ><br />
-                {{ form.ship_to.address or 'Shop No 2 and 3, Bileshwar Tower, M
-                G Road, Panch West, Mumbai Suburban, Maharashtra, 400080' }}<br />
-                {% if form.ship_to.phone %}Mobile No: {{ form.ship_to.phone
+                <span class="bold">{{ form.ship_to.name }}</span><br />
+                {{ form.ship_to.address }}<br />
+                {% if form.ship_to.mobile %}Mobile No: {{ form.ship_to.mobile
                 }}<br />{% endif %}
               </div>
             </td>
@@ -261,6 +258,7 @@
           <thead>
             <tr>
               <th class="text-center" rowspan="2">SR.NO.</th>
+              <th class="text-center" rowspan="2">Thickness</th>
               <th rowspan="2">ITEM NAME</th>
               <th class="text-center" rowspan="2">WT(KG)</th>
               <th class="text-center" colspan="2">ACTUAL SIZE</th>
@@ -277,13 +275,16 @@
             {% for item in form.proforma_items %}
             <tr>
               <td class="text-center">{{ loop.index }}</td>
+              <td>{{ item.thickness }}</td>
               <td>{{ item.name }}</td>
               <td class="text-center">{{ item.weight }}</td>
               <td class="text-center">
-                {{ item.width }} {{ item.unit or '' }}
+                {{ item.width }} {{ item.size_width_fraction or '' }} {{
+                item.unit or '' }}
               </td>
               <td class="text-center">
-                {{ item.height }} {{ item.unit or '' }}
+                {{ item.height }} {{ item.size_height_fraction or '' }} {{
+                item.unit or '' }}
               </td>
               <td class="text-center">{{ item.qty }}</td>
               <td class="text-center">
@@ -293,7 +294,9 @@
             </tr>
             {% endfor %}
             <tr>
-              <td colspan="5" class="text-right bold"></td>
+              <td colspan="3" class="text-right bold">Total weight in KG :</td>
+              <td class="text-center bold">{{ form.total_weight }}</td>
+              <td colspan="2"></td>
               <td class="text-center bold">{{ form.total_qty }}</td>
               <td class="text-right bold">Total:</td>
               <td class="text-center bold">
@@ -311,10 +314,6 @@
                 <div class="remarks">
                   <div class="bold">Remarks :</div>
                   <div>{{ form.remarks or '' }}</div>
-                  <div style="margin-top: 8px">
-                    Weight in KG :
-                    <span class="bold">{{ form.total_weight }}</span>
-                  </div>
                 </div>
               </td>
               <td style="width: 45%; vertical-align: top">
@@ -326,12 +325,21 @@
                         {{ '%.2f'|format(form.basic_total) }}
                       </td>
                     </tr>
+                    {% if form.additional_costs and form.additional_costs|length
+                    > 0 %} {% for cost in form.additional_costs %}
+                    <tr>
+                      <td class="label">{{ cost.name }}</td>
+                      <td class="amount">{{ '%.2f'|format(cost.amount) }}</td>
+                    </tr>
+                    {% endfor %} {% endif %}
                     <tr>
                       <td class="label">Total</td>
                       <td class="amount">
-                        {{ '%.2f'|format(form.basic_total) }}
+                        {{ '%.2f'|format(form.total_before_gst or
+                        form.basic_total) }}
                       </td>
                     </tr>
+                    {% if form.is_gst %}
                     <tr>
                       <td class="label">CGST 9.00 %</td>
                       <td class="amount">{{ '%.2f'|format(form.cgst) }}</td>
@@ -346,6 +354,7 @@
                         {{ '%.2f'|format(form.total_gst) }}
                       </td>
                     </tr>
+                    {% endif %}
                     <tr class="grand">
                       <td class="label">Grand Total</td>
                       <td class="amount">

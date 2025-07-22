@@ -216,11 +216,11 @@ async def generate_pdf(
             .select(
                 f"""*,
                     {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*,
-                    {SUPABASE_TABLES.proforma_additional_costs}:{SUPABASE_TABLES.proforma_additional_costs}(*),
+                    {SUPABASE_TABLES.proforma_additional_costs}:{SUPABASE_TABLES.proforma_additional_costs}(*,cost_type:{SUPABASE_TABLES.additional_costs_master}(name)),
                     {SUPABASE_TABLES.proforma_invoice_items}:{SUPABASE_TABLES.proforma_invoice_items}(*,
                     {SUPABASE_TABLES.products}:{SUPABASE_TABLES.products}(name,sku),
                     {SUPABASE_TABLES.thickness_master}:{SUPABASE_TABLES.thickness_master}(name,value,multiplier))),
-                    {SUPABASE_TABLES.customers}:{SUPABASE_TABLES.customers}(name,company_name,gstin,phone,email,address)
+                    {SUPABASE_TABLES.customers}:{SUPABASE_TABLES.customers}(name,company_name,gstin,phone,email,address,mobile,shipping_address)
                     )
                     """
             )
@@ -253,8 +253,21 @@ async def generate_pdf(
                 "unit": item.get("unit", ""),
                 "amount": item.get("amount", 0),
                 "rate_type": RATE_TYPE[item.get("rate_type", "")],
+                "size_width_fraction": item.get("size_width_fraction", ""),
+                "size_height_fraction": item.get("size_height_fraction", ""),
+                "thickness": item.get("thickness_master", {}).get("name", ""),
             }
             for item in items
+        ]
+
+        additional_costs = proforma_invoice.get("proforma_additional_costs", [])
+
+        additional_costs_data = [
+            {
+                "name": cost.get("cost_type", {}).get("name", ""),
+                "amount": cost.get("amount", 0),
+            }
+            for cost in additional_costs
         ]
 
         # Calculate GST
@@ -263,7 +276,7 @@ async def generate_pdf(
         cgst = total_gst / 2 if is_gst else 0
         sgst = total_gst / 2 if is_gst else 0
 
-        print("proforma_invoice.get('created_at')", processed_items)
+        # print("proforma_invoice.get('created_at')", processed_items)
 
         form_data = {
             "company_logo": company_details.get("logo"),
@@ -287,20 +300,24 @@ async def generate_pdf(
                 "name": customer.get("company_name") or customer.get("name"),
                 "address": customer.get("address"),
                 "phone": customer.get("phone"),
+                "mobile": customer.get("mobile"),
                 "gst": customer.get("gstin"),
             },
             "ship_to": {
                 "name": customer.get("company_name") or customer.get("name"),
-                "address": customer.get("address"),
+                "address": customer.get("shipping_address") or customer.get("address"),
                 "phone": customer.get("phone"),
+                "mobile": customer.get("mobile"),
             },
             "proforma_items": processed_items,
             "total_qty": total_qty,
             "basic_total": proforma_invoice.get("total_amount", 0),
             "remarks": proforma_invoice.get("remarks", ""),
             "total_weight": f"{total_weight:.2f}",
+            "additional_costs": additional_costs_data,
             "cgst": cgst,
             "sgst": sgst,
+            "is_gst": is_gst,
             "total_gst": total_gst if is_gst else 0,
             "grand_total": proforma_invoice.get("grand_total", 0),
             "bank_name": company_details.get("bank_account_name"),
