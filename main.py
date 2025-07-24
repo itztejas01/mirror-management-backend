@@ -216,6 +216,7 @@ async def generate_pdf(
             .select(
                 f"""*,
                     {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*,
+                    {SUPABASE_TABLES.users}:{SUPABASE_TABLES.users}(full_name),
                     {SUPABASE_TABLES.proforma_additional_costs}:{SUPABASE_TABLES.proforma_additional_costs}(*,cost_type:{SUPABASE_TABLES.additional_costs_master}(name)),
                     {SUPABASE_TABLES.proforma_invoice_items}:{SUPABASE_TABLES.proforma_invoice_items}(*,
                     {SUPABASE_TABLES.products}:{SUPABASE_TABLES.products}(name,sku),
@@ -261,22 +262,33 @@ async def generate_pdf(
         ]
 
         additional_costs = proforma_invoice.get("proforma_additional_costs", [])
+        additional_costs_data = list()
 
-        additional_costs_data = [
-            {
-                "name": cost.get("cost_type", {}).get("name", ""),
-                "amount": cost.get("amount", 0),
-            }
-            for cost in additional_costs
-        ]
+        if len(additional_costs) > 0:
+            additional_costs_data = [
+                {
+                    "name": cost.get("cost_type", {}).get("name", ""),
+                    "amount": cost.get("amount", 0),
+                }
+                for cost in additional_costs
+            ]
 
         # Calculate GST
         is_gst = proforma_invoice.get("is_gst", False)
+        total_cost_with_additional_cost = proforma_invoice.get("total_amount", 0)
+
+        if len(additional_costs_data) > 0:
+            total_cost_with_additional_cost = total_cost_with_additional_cost + sum(
+                cost.get("amount", 0) for cost in additional_costs_data
+            )
+
         total_gst = proforma_invoice.get("gst_amount", 0)
         cgst = total_gst / 2 if is_gst else 0
         sgst = total_gst / 2 if is_gst else 0
 
-        # print("proforma_invoice.get('created_at')", processed_items)
+        sales_person = "Default"
+        if proforma_invoice.get("users", {}) is not None:
+            sales_person = proforma_invoice.get("users", {}).get("full_name", "")
 
         form_data = {
             "company_logo": company_details.get("logo"),
@@ -287,15 +299,14 @@ async def generate_pdf(
             "company_gst": company_details.get("gst_no"),
             "company_pan": company_details.get("pan_no"),
             "proforma_no": proforma_invoice.get("pi_name"),
+            "sales_person": sales_person,
             "pi_date": convertDateToProperFormat(proforma_invoice.get("created_at")),
             "destination": proforma_invoice.get("destination", ""),
             "delivery_date": proforma_invoice.get("delivery_date", ""),
-            "payment_term": proforma_invoice.get("payment_term", "0"),
-            "revise_by": proforma_invoice.get("revise_by", ""),
-            "transport": proforma_invoice.get("transport", "Customer"),
-            "unloading": proforma_invoice.get("unloading", "Customer"),
-            "sales_person": proforma_invoice.get("sales_person", ""),
-            "vehicle_no": proforma_invoice.get("vehicle_no", "0"),
+            "payment_term": proforma_invoice.get("payment_terms", ""),
+            "transport": proforma_invoice.get("transport_info", ""),
+            "unloading": proforma_invoice.get("unloading_info", ""),
+            "vehicle_no": proforma_invoice.get("vehicle_no", ""),
             "bill_to": {
                 "name": customer.get("company_name") or customer.get("name"),
                 "address": customer.get("address"),
@@ -312,14 +323,15 @@ async def generate_pdf(
             "proforma_items": processed_items,
             "total_qty": total_qty,
             "basic_total": proforma_invoice.get("total_amount", 0),
+            "total_cost_with_additional_cost": f"{total_cost_with_additional_cost:.2f}",
             "remarks": proforma_invoice.get("remarks", ""),
             "total_weight": f"{total_weight:.2f}",
             "additional_costs": additional_costs_data,
-            "cgst": cgst,
-            "sgst": sgst,
+            "cgst": f"{cgst:.2f}",
+            "sgst": f"{sgst:.2f}",
             "is_gst": is_gst,
-            "total_gst": total_gst if is_gst else 0,
-            "grand_total": proforma_invoice.get("grand_total", 0),
+            "total_gst": f"{total_gst:.2f}" if is_gst else 0,
+            "grand_total": f"{proforma_invoice.get('grand_total', 0):.2f}",
             "bank_name": company_details.get("bank_account_name"),
             "bank": company_details.get("bank_name"),
             "branch": company_details.get("branch", ""),

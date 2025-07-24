@@ -226,27 +226,23 @@
                 </tr>
                 <tr>
                   <td class="bold border-bottom">Payment Term :</td>
-                  <td class="border-bottom">0</td>
+                  <td class="border-bottom">{{ form.payment_term }}</td>
                 </tr>
                 <tr>
-                  <td class="bold border-bottom">Revise by :</td>
-                  <td class="border-bottom">{{ form.revise_by }}</td>
+                  <td class="bold border-bottom">Made by :</td>
+                  <td class="border-bottom">{{ form.sales_person }}</td>
                 </tr>
                 <tr>
                   <td class="bold border-bottom">Transport :</td>
-                  <td class="border-bottom">Customer</td>
+                  <td class="border-bottom">{{ form.transport }}</td>
                 </tr>
                 <tr>
                   <td class="bold border-bottom">Unloading :</td>
-                  <td class="border-bottom">Customer</td>
-                </tr>
-                <tr>
-                  <td class="bold border-bottom">Sales Person :</td>
-                  <td class="border-bottom"></td>
+                  <td class="border-bottom">{{ form.unloading }}</td>
                 </tr>
                 <tr>
                   <td class="bold border-bottom">Vehicle No :</td>
-                  <td class="border-bottom">0</td>
+                  <td class="border-bottom">{{ form.vehicle_no }}</td>
                 </tr>
               </table>
             </td>
@@ -329,37 +325,32 @@
                     > 0 %} {% for cost in form.additional_costs %}
                     <tr>
                       <td class="label">{{ cost.name }}</td>
-                      <td class="amount">{{ '%.2f'|format(cost.amount) }}</td>
+                      <td class="amount">{{ cost.amount }}</td>
                     </tr>
                     {% endfor %} {% endif %}
                     <tr>
                       <td class="label">Total</td>
                       <td class="amount">
-                        {{ '%.2f'|format(form.total_before_gst or
-                        form.basic_total) }}
+                        {{ form.total_cost_with_additional_cost }}
                       </td>
                     </tr>
                     {% if form.is_gst %}
                     <tr>
                       <td class="label">CGST 9.00 %</td>
-                      <td class="amount">{{ '%.2f'|format(form.cgst) }}</td>
+                      <td class="amount">{{ form.cgst }}</td>
                     </tr>
                     <tr>
                       <td class="label">SGST 9.00 %</td>
-                      <td class="amount">{{ '%.2f'|format(form.sgst) }}</td>
+                      <td class="amount">{{ form.sgst }}</td>
                     </tr>
                     <tr class="grand">
                       <td class="label">Total : Add GST 18%</td>
-                      <td class="amount">
-                        {{ '%.2f'|format(form.total_gst) }}
-                      </td>
+                      <td class="amount">{{ form.total_gst }}</td>
                     </tr>
                     {% endif %}
                     <tr class="grand">
                       <td class="label">Grand Total</td>
-                      <td class="amount">
-                        {{ '%.2f'|format(form.grand_total) }}
-                      </td>
+                      <td class="amount">{{ form.grand_total }}</td>
                     </tr>
                   </tbody>
                 </table>
