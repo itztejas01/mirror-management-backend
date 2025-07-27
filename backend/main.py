@@ -6,6 +6,7 @@ from utils.helpers import (
     success_response,
     convertDateToProperFormat,
     createPdf,
+    get_financial_year,
 )
 
 from mangum import Mangum
@@ -82,6 +83,29 @@ async def jwt_middleware(request: Request, call_next):
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.get("/latest-invoice-number")
+async def latest_invoice_number():
+    try:
+        fy = get_financial_year()
+        result = supabase.rpc("get_next_invoice_number", {"fy_param": fy}).execute()
+
+        print("result: ", result)
+
+        if result.data is None:
+            return failure_response(result.error.message, {}, 500)
+
+        invoice_number = result.data
+
+        return success_response(
+            "Financial year fetched successfully",
+            {"invoice_number": invoice_number},
+            200,
+        )
+    except Exception as e:
+        print(e)
+        return failure_response(str(e), {}, 500)
 
 
 @app.get("/stats")

@@ -154,3 +154,13 @@ def createPdf(data, templates, template_to_choose):
         print(f"Error in createPdf: {str(e)}")
         print(f"Template: {template_to_choose}")
         raise e
+
+
+def get_financial_year():
+    today = datetime.now()
+    year = today.year
+    return (
+        f"{year - 1}-{str(year)[-2:]}"
+        if today.month < 4
+        else f"{year}-{str(year + 1)[-2:]}"
+    )

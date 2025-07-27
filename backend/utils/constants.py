@@ -25,6 +25,7 @@ class SUPABASE_TABLES:
     thickness_master = "thickness_master"
     users = "users"
     company_details = "company_master"
+    invoice_counters = "invoice_counters"
 
 
 RATE_TYPE = {
