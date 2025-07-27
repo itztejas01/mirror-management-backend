@@ -8,7 +8,7 @@ from utils.helpers import (
     createPdf,
 )
 
-# from mangum import Mangum
+from mangum import Mangum
 from fastapi.templating import Jinja2Templates
 from utils.supabaseClient import supabase
 from utils.constants import (
@@ -25,7 +25,7 @@ import re
 
 app = FastAPI()
 origins = ["*"]
-# handler = Mangum(app)
+handler = Mangum(app)
 templates = Jinja2Templates(directory="template")
 
 app.add_middleware(

@@ -1,0 +1,12 @@
+# Ignore CDK code and output
+infra/
+infra/cdk.out/
+
+# Ignore virtual environments
+env/
+.venv/
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
