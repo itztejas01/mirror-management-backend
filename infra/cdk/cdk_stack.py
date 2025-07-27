@@ -132,6 +132,13 @@ class CdkStack(Stack):
             method_responses=json_method_response,
         )
 
+        latest_invoice_number = api.root.add_resource("latest-invoice-number")
+        latest_invoice_number.add_method(
+            "GET",
+            json_lambda_integration,
+            method_responses=json_method_response,
+        )
+
         # Login endpoint (JSON)
         login = api.root.add_resource("login")
         login.add_method(
