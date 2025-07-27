@@ -59,38 +59,92 @@ class CdkStack(Stack):
             description="API for Mirror Management System",
             binary_media_types=[
                 "application/pdf",
-                "*/*",
-            ],  # Enable binary support for PDFs
+                "application/octet-stream",
+            ],
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=apigw.Cors.ALL_ORIGINS,
                 allow_methods=apigw.Cors.ALL_METHODS,
-                allow_headers=["*"],
+                allow_headers=[
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                    "X-Amz-User-Agent",
+                    "Accept",
+                    "*",
+                ],
+                allow_credentials=True,
+                max_age=Duration.seconds(300),
             ),
         )
 
-        # Create Lambda integration with binary support
-        lambda_integration = apigw.LambdaIntegration(
+        # Create Lambda integration for JSON endpoints
+        json_lambda_integration = apigw.LambdaIntegration(
             mirror_lambda,
-            proxy=True,  # Enable proxy integration for binary support
-            content_handling=apigw.ContentHandling.CONVERT_TO_BINARY,  # Handle binary responses
+            proxy=True,
         )
 
-        # Define API routes
-        # Stats endpoint
+        # Create Lambda integration for PDF endpoints with binary support
+        pdf_lambda_integration = apigw.LambdaIntegration(
+            mirror_lambda,
+            proxy=True,
+            content_handling=apigw.ContentHandling.CONVERT_TO_BINARY,
+        )
+
+        # Define method responses for JSON endpoints
+        json_method_response = [
+            apigw.MethodResponse(
+                status_code="200",
+                response_parameters={
+                    "method.response.header.Access-Control-Allow-Headers": True,
+                    "method.response.header.Access-Control-Allow-Origin": True,
+                    "method.response.header.Access-Control-Allow-Methods": True,
+                },
+                response_models={
+                    "application/json": apigw.Model.EMPTY_MODEL,
+                },
+            )
+        ]
+
+        # Define method responses for PDF endpoints
+        pdf_method_response = [
+            apigw.MethodResponse(
+                status_code="200",
+                response_parameters={
+                    "method.response.header.Access-Control-Allow-Headers": True,
+                    "method.response.header.Access-Control-Allow-Origin": True,
+                    "method.response.header.Access-Control-Allow-Methods": True,
+                    "method.response.header.Content-Type": True,
+                    "method.response.header.Content-Disposition": True,
+                },
+                response_models={
+                    "application/pdf": apigw.Model.EMPTY_MODEL,
+                },
+            )
+        ]
+
+        # Stats endpoint (JSON)
         stats = api.root.add_resource("stats")
-        stats.add_method("GET", lambda_integration)
+        stats.add_method(
+            "GET",
+            json_lambda_integration,
+            method_responses=json_method_response,
+        )
 
-        # Login endpoint
+        # Login endpoint (JSON)
         login = api.root.add_resource("login")
-        login.add_method("POST", lambda_integration)
+        login.add_method(
+            "POST",
+            json_lambda_integration,
+            method_responses=json_method_response,
+        )
 
-        # Invoice endpoint with path parameter
+        # Invoice endpoint with path parameter (PDF)
         invoice = api.root.add_resource("invoice")
         invoice_with_id = invoice.add_resource("{order_id}")
-        invoice_with_id.add_method("GET", lambda_integration)
-
-        # S3 bucket permissions
-        bucket = s3.Bucket.from_bucket_name(
-            self, "MirrorManagementBucket", "mirror-management-backend"
+        invoice_with_id.add_method(
+            "GET",
+            pdf_lambda_integration,
+            method_responses=pdf_method_response,
         )
-        bucket.grant_read_write(mirror_lambda)

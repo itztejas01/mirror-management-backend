@@ -92,8 +92,13 @@ async def get_stats():
         current_month = CURRENT_TIME.strftime("%Y-%m")
         # print(current_month)
         current_month_orders = (
-            supabase.table(SUPABASE_TABLES["orders"])
-            .select("*", count="exact")
+            supabase.table(SUPABASE_TABLES.orders)
+            .select(
+                f"""*,
+                    {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*)
+                    """,
+                count="exact",
+            )
             .gte("created_at", datetime.strptime(f"{current_month}-01", "%Y-%m-%d"))
             .lt(
                 "created_at",
@@ -112,8 +117,13 @@ async def get_stats():
         )
         # print(previous_month)
         previous_month_orders = (
-            supabase.table(SUPABASE_TABLES["orders"])
-            .select("*", count="exact")
+            supabase.table(SUPABASE_TABLES.orders)
+            .select(
+                f"""*,
+                    {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*)
+                    """,
+                count="exact",
+            )
             .gte("created_at", datetime.strptime(f"{previous_month}-01", "%Y-%m-%d"))
             .lt(
                 "created_at",
@@ -127,10 +137,12 @@ async def get_stats():
 
         # Calculate stats
         current_month_total = sum(
-            order["total_value"] for order in current_month_orders.data
+            order["proforma_invoices"]["grand_total"]
+            for order in current_month_orders.data
         )
         previous_month_total = sum(
-            order["total_value"] for order in previous_month_orders.data
+            order["proforma_invoices"]["grand_total"]
+            for order in previous_month_orders.data
         )
 
         current_month_count = current_month_orders.count
@@ -348,7 +360,14 @@ async def generate_pdf(
 
         print("PDF generated successfully")
 
-        return Response(content=pdf_bytes, media_type="application/pdf")
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Type": "application/pdf",
+                "Content-Disposition": f'attachment; filename="invoice_{order_id}.pdf"',
+            },
+        )
     except Exception as e:
         print(e)
         return failure_response(str(e), {}, 500)
