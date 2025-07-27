@@ -313,12 +313,26 @@ async def generate_pdf(
             "proforma_no": proforma_invoice.get("pi_name"),
             "sales_person": sales_person,
             "pi_date": convertDateToProperFormat(proforma_invoice.get("created_at")),
-            "destination": proforma_invoice.get("destination", ""),
-            "delivery_date": proforma_invoice.get("delivery_date", ""),
-            "payment_term": proforma_invoice.get("payment_terms", ""),
-            "transport": proforma_invoice.get("transport_info", ""),
-            "unloading": proforma_invoice.get("unloading_info", ""),
-            "vehicle_no": proforma_invoice.get("vehicle_no", ""),
+            "destination": (
+                proforma_invoice.get("destination", "N/A")
+                if proforma_invoice.get("destination") is not None
+                else "N/A"
+            ),
+            "delivery_date": (
+                convertDateToProperFormat(order_data.get("delivery_date", "N/A"))
+                if order_data.get("delivery_date") is not None
+                else "N/A"
+            ),
+            "transport": (
+                proforma_invoice.get("transport_info", "N/A")
+                if proforma_invoice.get("transport_info") is not None
+                else "N/A"
+            ),
+            "unloading": (
+                proforma_invoice.get("unloading_info", "N/A")
+                if proforma_invoice.get("unloading_info") is not None
+                else "N/A"
+            ),
             "bill_to": {
                 "name": customer.get("company_name") or customer.get("name"),
                 "address": customer.get("address"),
