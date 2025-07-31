@@ -111,10 +111,8 @@ async def latest_invoice_number():
 @app.get("/stats")
 async def get_stats():
     try:
-        # print(await pgConn.fetch("SELECT 1"))
         # Get current month's orders
         current_month = CURRENT_TIME.strftime("%Y-%m")
-        # print(current_month)
         current_month_orders = (
             supabase.table(SUPABASE_TABLES.orders)
             .select(
@@ -133,13 +131,11 @@ async def get_stats():
             )
             .execute()
         )
-        # print(current_month_orders)
 
         # Get previous month's orders
         previous_month = (CURRENT_TIME.replace(day=1) - timedelta(days=1)).strftime(
             "%Y-%m"
         )
-        # print(previous_month)
         previous_month_orders = (
             supabase.table(SUPABASE_TABLES.orders)
             .select(
@@ -158,6 +154,91 @@ async def get_stats():
             )
             .execute()
         )
+
+        # Get recent activity - new quotations in pending status for current month
+        current_month_pending_quotations = (
+            supabase.table(SUPABASE_TABLES.orders)
+            .select(
+                f"""*,
+                    {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*),
+                    {SUPABASE_TABLES.customers}:{SUPABASE_TABLES.customers}(name, company_name)
+                    """,
+                count="exact",
+            )
+            .gte("created_at", datetime.strptime(f"{current_month}-01", "%Y-%m-%d"))
+            .lt(
+                "created_at",
+                (
+                    datetime.strptime(f"{current_month}-01", "%Y-%m-%d")
+                    + timedelta(days=32)
+                ).replace(day=1),
+            )
+            .eq("status", "pending")  # Assuming there's a status field
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+        )
+
+        # Get total customers count
+        total_customers = (
+            supabase.table(SUPABASE_TABLES.customers)
+            .select("*", count="exact")
+            .execute()
+        )
+
+        # Get delivered orders count
+        delivered_orders = (
+            supabase.table(SUPABASE_TABLES.orders)
+            .select("*", count="exact")
+            .eq("status", "delivered")  # Assuming there's a status field
+            .execute()
+        )
+
+        # Get monthly orders data for the last 12 months for graph
+        monthly_orders_data = []
+        for i in range(12):
+            month_date = CURRENT_TIME.replace(day=1) - timedelta(days=i * 30)
+            month_str = month_date.strftime("%Y-%m")
+
+            month_orders = (
+                supabase.table(SUPABASE_TABLES.orders)
+                .select(
+                    f"""*,
+                        {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*)
+                        """,
+                    count="exact",
+                )
+                .gte("created_at", datetime.strptime(f"{month_str}-01", "%Y-%m-%d"))
+                .lt(
+                    "created_at",
+                    (
+                        datetime.strptime(f"{month_str}-01", "%Y-%m-%d")
+                        + timedelta(days=32)
+                    ).replace(day=1),
+                )
+                .execute()
+            )
+
+            month_revenue = (
+                sum(
+                    order["proforma_invoices"]["grand_total"]
+                    for order in month_orders.data
+                )
+                if month_orders.data
+                else 0
+            )
+
+            monthly_orders_data.append(
+                {
+                    "month": month_date.strftime("%B %Y"),
+                    "month_key": month_str,
+                    "order_count": month_orders.count or 0,
+                    "revenue": month_revenue,
+                }
+            )
+
+        # Reverse to get chronological order
+        monthly_orders_data.reverse()
 
         # Calculate stats
         current_month_total = sum(
@@ -184,6 +265,26 @@ async def get_stats():
             else 0
         )
 
+        # Process recent activity data
+        recent_activity = []
+        for order in current_month_pending_quotations.data:
+            customer_name = order.get("customers", {}).get("company_name") or order.get(
+                "customers", {}
+            ).get("name", "Unknown")
+            recent_activity.append(
+                {
+                    "order_id": order.get("id"),
+                    "customer_name": customer_name,
+                    "created_at": order.get("created_at"),
+                    "proforma_number": order.get("proforma_invoices", {}).get(
+                        "pi_name", "N/A"
+                    ),
+                    "total_amount": order.get("proforma_invoices", {}).get(
+                        "grand_total", 0
+                    ),
+                }
+            )
+
         stats = {
             "current_month": {
                 "total_orders": current_month_count,
@@ -197,6 +298,15 @@ async def get_stats():
                 "revenue_change_percent": round(revenue_change_percent, 2),
                 "order_count_change_percent": round(order_count_change_percent, 2),
             },
+            "recent_activity": {
+                "pending_quotations_count": current_month_pending_quotations.count or 0,
+                "recent_quotations": recent_activity,
+            },
+            "system_overview": {
+                "total_customers": total_customers.count or 0,
+                "delivered_orders": delivered_orders.count or 0,
+            },
+            "monthly_data": monthly_orders_data,
         }
 
         return success_response("Stats fetched successfully", stats, 200)
