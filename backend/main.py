@@ -421,6 +421,7 @@ async def generate_pdf(
             total_items_sqft += total_sqft
             processed_items.append(
                 {
+                    "customer_order_no": item.get("customer_order_no", ""),
                     "name": item.get("products", {}).get("name", ""),
                     "weight": f'{item.get("weight", 0):.2f}',
                     "width": item.get("size_width", ""),
@@ -436,6 +437,9 @@ async def generate_pdf(
                     "thickness": item.get("thickness_master", {}).get("name", ""),
                 }
             )
+
+        # sort the processed_items by customer_order_no
+        processed_items.sort(key=lambda x: x.get("customer_order_no", ""))
 
         additional_costs = proforma_invoice.get("proforma_additional_costs", [])
         additional_costs_data = list()

@@ -267,7 +267,7 @@
           <thead>
             <tr>
               <th class="text-center" rowspan="2">SR.NO.</th>
-
+              <th class="text-center" rowspan="2">CUSTOMER ORDER NO.</th>
               <th rowspan="2">ITEM NAME</th>
               <th class="text-center" rowspan="2">WT(KG)</th>
               <th class="text-center" colspan="2">ACTUAL SIZE</th>
@@ -289,6 +289,7 @@
             {% for item in form.proforma_items %}
             <tr>
               <td class="text-center">{{ loop.index }}</td>
+              <td class="text-center">{{ item.customer_order_no }}</td>
               <td>{{ item.thickness }} {{ item.name }}</td>
               <td class="text-center">{{ item.weight }}</td>
               <td class="text-center">
@@ -306,7 +307,7 @@
             </tr>
             {% endfor %}
             <tr>
-              <td colspan="2" class="text-right bold">Total weight in KG :</td>
+              <td colspan="3" class="text-right bold">Total weight in KG :</td>
               <td class="text-center bold">{{ form.total_weight }}</td>
               <td colspan="2" class="text-right bold">Total Sq.Ft :</td>
               <td class="text-center">{{ form.total_sqft }}</td>
