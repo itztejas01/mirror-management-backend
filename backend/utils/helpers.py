@@ -164,3 +164,32 @@ def get_financial_year():
         if today.month < 4
         else f"{year}-{str(year + 1)[-2:]}"
     )
+
+
+def parse_fractional_inch(whole: str, fraction: str = None) -> float:
+    """
+    Parse fractional inch values from whole number and optional fraction.
+
+    Args:
+        whole (str): The whole number part
+        fraction (str, optional): The fractional part (e.g., "1/2", "3/4")
+
+    Returns:
+        float: The total value in inches
+    """
+    w = float(whole) if whole else 0.0
+
+    if not fraction:
+        return w
+
+    parts = fraction.split("/")
+    if len(parts) == 2:
+        try:
+            num = float(parts[0])
+            den = float(parts[1])
+            if den != 0:
+                return w + num / den
+        except (ValueError, ZeroDivisionError):
+            pass
+
+    return w

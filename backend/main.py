@@ -7,6 +7,7 @@ from utils.helpers import (
     convertDateToProperFormat,
     createPdf,
     get_financial_year,
+    parse_fractional_inch,
 )
 
 from mangum import Mangum
@@ -156,7 +157,7 @@ async def get_stats():
         )
 
         # Get recent activity - new quotations in pending status for current month
-        current_month_pending_quotations = (
+        current_month_quotations = (
             supabase.table(SUPABASE_TABLES.orders)
             .select(
                 f"""*,
@@ -173,7 +174,7 @@ async def get_stats():
                     + timedelta(days=32)
                 ).replace(day=1),
             )
-            .eq("status", "pending")  # Assuming there's a status field
+            .eq("status", "pending")
             .order("created_at", desc=True)
             .limit(10)
             .execute()
@@ -233,20 +234,20 @@ async def get_stats():
                     "month": month_date.strftime("%B %Y"),
                     "month_key": month_str,
                     "order_count": month_orders.count or 0,
-                    "revenue": month_revenue,
+                    "revenue": float(f"{month_revenue:.2f}"),
                 }
             )
 
         # Reverse to get chronological order
-        monthly_orders_data.reverse()
+        monthly_orders_data.sort(key=lambda x: x["month_key"])
 
         # Calculate stats
         current_month_total = sum(
-            order["proforma_invoices"]["grand_total"]
+            float(f"{order['proforma_invoices']['grand_total']:.2f}")
             for order in current_month_orders.data
         )
         previous_month_total = sum(
-            order["proforma_invoices"]["grand_total"]
+            float(f"{order['proforma_invoices']['grand_total']:.2f}")
             for order in previous_month_orders.data
         )
 
@@ -267,7 +268,7 @@ async def get_stats():
 
         # Process recent activity data
         recent_activity = []
-        for order in current_month_pending_quotations.data:
+        for order in current_month_quotations.data:
             customer_name = order.get("customers", {}).get("company_name") or order.get(
                 "customers", {}
             ).get("name", "Unknown")
@@ -279,9 +280,10 @@ async def get_stats():
                     "proforma_number": order.get("proforma_invoices", {}).get(
                         "pi_name", "N/A"
                     ),
-                    "total_amount": order.get("proforma_invoices", {}).get(
-                        "grand_total", 0
+                    "total_amount": float(
+                        f"{order.get('proforma_invoices', {}).get('grand_total', 0):.2f}"
                     ),
+                    "status": order.get("status", "N/A"),
                 }
             )
 
@@ -299,7 +301,7 @@ async def get_stats():
                 "order_count_change_percent": round(order_count_change_percent, 2),
             },
             "recent_activity": {
-                "pending_quotations_count": current_month_pending_quotations.count or 0,
+                "pending_quotations_count": current_month_quotations.count or 0,
                 "recent_quotations": recent_activity,
             },
             "system_overview": {
@@ -389,23 +391,51 @@ async def generate_pdf(
         total_weight = sum(item.get("weight", 0) for item in items)
 
         # Process items
-        processed_items = [
-            {
-                "name": item.get("products", {}).get("name", ""),
-                "weight": f'{item.get("weight", 0):.2f}',
-                "width": item.get("size_width", ""),
-                "height": item.get("size_height", ""),
-                "qty": item.get("quantity", 0),
-                "rate": item.get("rate", 0),
-                "unit": item.get("unit", ""),
-                "amount": item.get("amount", 0),
-                "rate_type": RATE_TYPE[item.get("rate_type", "")],
-                "size_width_fraction": item.get("size_width_fraction", ""),
-                "size_height_fraction": item.get("size_height_fraction", ""),
-                "thickness": item.get("thickness_master", {}).get("name", ""),
-            }
-            for item in items
-        ]
+        processed_items = []
+        total_items_sqft = 0
+        for item in items:
+            # first convert the width and height to feet
+            # if the unit is mm, then convert to feet
+            if item.get("unit") == "mm":
+                width_feet = item.get("size_width", 0) / 304.8
+                height_feet = item.get("size_height", 0) / 304.8
+            elif item.get("unit") == "inch":
+                size_width_fraction = item.get("size_width_fraction", "")
+                size_height_fraction = item.get("size_height_fraction", "")
+                width_whole = item.get("size_width", 0)
+                height_whole = item.get("size_height", 0)
+
+                width_inches = parse_fractional_inch(width_whole, size_width_fraction)
+
+                height_inches = parse_fractional_inch(
+                    height_whole, size_height_fraction
+                )
+
+                width_feet = width_inches / 12
+                height_feet = height_inches / 12
+            else:
+                width_feet = item.get("size_width", 0)
+                height_feet = item.get("size_height", 0)
+
+            total_sqft = width_feet * height_feet
+            total_items_sqft += total_sqft
+            processed_items.append(
+                {
+                    "name": item.get("products", {}).get("name", ""),
+                    "weight": f'{item.get("weight", 0):.2f}',
+                    "width": item.get("size_width", ""),
+                    "height": item.get("size_height", ""),
+                    "total_sqft": f"{total_sqft:.2f}",
+                    "qty": item.get("quantity", 0),
+                    "rate": item.get("rate", 0),
+                    "unit": item.get("unit", ""),
+                    "amount": item.get("amount", 0),
+                    "rate_type": RATE_TYPE[item.get("rate_type", "")],
+                    "size_width_fraction": item.get("size_width_fraction", ""),
+                    "size_height_fraction": item.get("size_height_fraction", ""),
+                    "thickness": item.get("thickness_master", {}).get("name", ""),
+                }
+            )
 
         additional_costs = proforma_invoice.get("proforma_additional_costs", [])
         additional_costs_data = list()
@@ -486,6 +516,7 @@ async def generate_pdf(
             "total_cost_with_additional_cost": f"{total_cost_with_additional_cost:.2f}",
             "remarks": proforma_invoice.get("remarks", ""),
             "total_weight": f"{total_weight:.2f}",
+            "total_sqft": f"{total_items_sqft:.2f}",
             "additional_costs": additional_costs_data,
             "cgst": f"{cgst:.2f}",
             "sgst": f"{sgst:.2f}",
