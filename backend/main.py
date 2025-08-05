@@ -477,6 +477,26 @@ async def generate_pdf(
         cgst = total_gst / 2 if is_gst else 0
         sgst = total_gst / 2 if is_gst else 0
 
+        # Calculate advanced payment
+        has_advanced_payment = proforma_invoice.get("has_advanced_payment", False)
+        advanced_payment_amount = (
+            proforma_invoice.get("advanced_payment_amount", 0)
+            if has_advanced_payment
+            else 0
+        )
+        advanced_payment_notes = (
+            proforma_invoice.get("advanced_payment_notes", "")
+            if has_advanced_payment
+            else ""
+        )
+
+        grand_total = proforma_invoice.get("grand_total", 0)
+        balance_amount = (
+            grand_total - advanced_payment_amount
+            if has_advanced_payment
+            else grand_total
+        )
+
         sales_person = "Default"
         if proforma_invoice.get("users", {}) is not None:
             sales_person = proforma_invoice.get("users", {}).get("full_name", "")
@@ -538,6 +558,10 @@ async def generate_pdf(
             "is_gst": is_gst,
             "total_gst": f"{total_gst:.2f}" if is_gst else 0,
             "grand_total": f"{proforma_invoice.get('grand_total', 0):.2f}",
+            "has_advanced_payment": has_advanced_payment,
+            "advanced_payment_amount": advanced_payment_amount,
+            "advanced_payment_notes": advanced_payment_notes,
+            "balance_amount": f"{balance_amount:.2f}",
             "bank_name": company_details.get("bank_account_name"),
             "bank": company_details.get("bank_name"),
             "branch": company_details.get("branch", ""),

@@ -328,6 +328,13 @@
                 <div class="remarks">
                   <div class="bold">Remarks :</div>
                   <div>{{ form.remarks or '' }}</div>
+                  {% if form.has_advanced_payment and
+                  form.advanced_payment_notes %}
+                  <div style="margin-top: 8px">
+                    <div class="bold">Advanced Payment Notes :</div>
+                    <div>{{ form.advanced_payment_notes }}</div>
+                  </div>
+                  {% endif %}
                 </div>
               </td>
               <td style="width: 45%; vertical-align: top">
@@ -370,6 +377,18 @@
                       <td class="label">Grand Total</td>
                       <td class="amount">{{ form.grand_total }}</td>
                     </tr>
+                    {% if form.has_advanced_payment %}
+                    <tr>
+                      <td class="label">Advanced Payment</td>
+                      <td class="amount">
+                        -{{ '%.2f'|format(form.advanced_payment_amount) }}
+                      </td>
+                    </tr>
+                    <tr class="grand">
+                      <td class="label">Balance Amount</td>
+                      <td class="amount">{{ form.balance_amount }}</td>
+                    </tr>
+                    {% endif %}
                   </tbody>
                 </table>
               </td>
