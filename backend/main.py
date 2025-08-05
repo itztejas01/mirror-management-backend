@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Request, HTTPException
+from fastapi import FastAPI, Response, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from utils.helpers import (
     failure_response,
@@ -21,6 +21,7 @@ from utils.constants import (
 from datetime import timedelta, datetime
 from utils.schema import UserLoginSchema
 import re
+from supabase import Client
 
 
 # Initialize logging
@@ -74,11 +75,16 @@ async def jwt_middleware(request: Request, call_next):
     try:
         user = verify_token(token)
         request.state.user = user["decoded_token"]
+        request.state.authenticated_client = user["authenticated_client"]
     except HTTPException as e:
         return failure_response(e.detail, status_code=e.status_code)
 
     response = await call_next(request)
     return response
+
+
+async def get_authenticated_client(request: Request) -> Client:
+    return request.state.authenticated_client
 
 
 @app.get("/")
@@ -87,10 +93,14 @@ async def root():
 
 
 @app.get("/latest-invoice-number")
-async def latest_invoice_number():
+async def latest_invoice_number(
+    authenticated_client: Client = Depends(get_authenticated_client),
+):
     try:
         fy = get_financial_year()
-        result = supabase.rpc("get_next_invoice_number", {"fy_param": fy}).execute()
+        result = authenticated_client.rpc(
+            "get_next_invoice_number", {"fy_param": fy}
+        ).execute()
 
         print("result: ", result)
 
@@ -110,12 +120,12 @@ async def latest_invoice_number():
 
 
 @app.get("/stats")
-async def get_stats():
+async def get_stats(authenticated_client: Client = Depends(get_authenticated_client)):
     try:
         # Get current month's orders
         current_month = CURRENT_TIME.strftime("%Y-%m")
         current_month_orders = (
-            supabase.table(SUPABASE_TABLES.orders)
+            authenticated_client.table(SUPABASE_TABLES.orders)
             .select(
                 f"""*,
                     {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*)
@@ -138,7 +148,7 @@ async def get_stats():
             "%Y-%m"
         )
         previous_month_orders = (
-            supabase.table(SUPABASE_TABLES.orders)
+            authenticated_client.table(SUPABASE_TABLES.orders)
             .select(
                 f"""*,
                     {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*)
@@ -158,7 +168,7 @@ async def get_stats():
 
         # Get recent activity - new quotations in pending status for current month
         current_month_quotations = (
-            supabase.table(SUPABASE_TABLES.orders)
+            authenticated_client.table(SUPABASE_TABLES.orders)
             .select(
                 f"""*,
                     {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*),
@@ -182,14 +192,14 @@ async def get_stats():
 
         # Get total customers count
         total_customers = (
-            supabase.table(SUPABASE_TABLES.customers)
+            authenticated_client.table(SUPABASE_TABLES.customers)
             .select("*", count="exact")
             .execute()
         )
 
         # Get delivered orders count
         delivered_orders = (
-            supabase.table(SUPABASE_TABLES.orders)
+            authenticated_client.table(SUPABASE_TABLES.orders)
             .select("*", count="exact")
             .eq("status", "delivered")  # Assuming there's a status field
             .execute()
@@ -202,7 +212,7 @@ async def get_stats():
             month_str = month_date.strftime("%Y-%m")
 
             month_orders = (
-                supabase.table(SUPABASE_TABLES.orders)
+                authenticated_client.table(SUPABASE_TABLES.orders)
                 .select(
                     f"""*,
                         {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*)
@@ -344,11 +354,12 @@ async def login(data: UserLoginSchema):
 @app.get("/invoice/{order_id}")
 async def generate_pdf(
     order_id: str,
+    authenticated_client: Client = Depends(get_authenticated_client),
 ):
     # print("Generating invoice for order_id: ", SUPABASE_URL, SUPABASE_ANON_KEY)
     try:
         company_details = (
-            supabase.table(SUPABASE_TABLES.company_details)
+            authenticated_client.table(SUPABASE_TABLES.company_details)
             .select("*")
             .eq("id", 1)
             .execute()
@@ -360,7 +371,7 @@ async def generate_pdf(
         company_details = company_details.data[0]
 
         order = (
-            supabase.table(SUPABASE_TABLES.orders)
+            authenticated_client.table(SUPABASE_TABLES.orders)
             .select(
                 f"""*,
                     {SUPABASE_TABLES.proforma_invoices}:{SUPABASE_TABLES.proforma_invoices}(*,

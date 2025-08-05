@@ -11,7 +11,8 @@ import jwt
 import pytz
 from weasyprint import HTML
 from io import BytesIO
-from .supabaseClient import supabase
+from .supabaseClient import supabase, SUPABASE_URL, SUPABASE_ANON_KEY
+from supabase import create_client, ClientOptions
 
 
 def response_content(
@@ -89,9 +90,22 @@ def convertDOB(value: str) -> str:
 def verify_token(access_token: str):
     token = access_token
     try:
+        print("Creating authenticated client")
         token_data = supabase.auth.get_user(access_token)
 
-        return dict({"decoded_token": token_data, "token": token})
+        authenticated_client = create_client(
+            supabase_url=SUPABASE_URL,
+            supabase_key=SUPABASE_ANON_KEY,
+            options=ClientOptions(headers={"Authorization": f"Bearer {access_token}"}),
+        )
+
+        return dict(
+            {
+                "decoded_token": token_data,
+                "token": token,
+                "authenticated_client": authenticated_client,
+            }
+        )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
