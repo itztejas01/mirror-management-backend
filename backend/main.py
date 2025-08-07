@@ -22,6 +22,7 @@ from datetime import timedelta, datetime
 from utils.schema import UserLoginSchema
 import re
 from supabase import Client
+from natsort import natsorted
 
 
 # Initialize logging
@@ -450,7 +451,8 @@ async def generate_pdf(
             )
 
         # sort the processed_items by customer_order_no
-        processed_items.sort(key=lambda x: x.get("customer_order_no", ""))
+        # processed_items.sort(key=lambda x: x.get("customer_order_no", ""))
+        processed_items = natsorted(processed_items, key=lambda x: x.get("customer_order_no", ""))
 
         additional_costs = proforma_invoice.get("proforma_additional_costs", [])
         additional_costs_data = list()
