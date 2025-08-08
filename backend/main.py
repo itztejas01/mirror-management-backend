@@ -592,7 +592,7 @@ async def generate_pdf(
 
         pdf_context = {"form": form_data}
 
-        print("pdf_context: ", pdf_context)
+        # print("pdf_context: ", pdf_context)
 
         pdf_bytes = createPdf(pdf_context, templates, "invoice.html")
 
