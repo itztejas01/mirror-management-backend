@@ -271,8 +271,8 @@
               <th rowspan="2">ITEM NAME</th>
               <th class="text-center" rowspan="2">WT(KG)</th>
               <th class="text-center" colspan="2">ACTUAL SIZE</th>
-              <th class="text-center" rowspan="2">Total Sq.Ft</th>
               <th class="text-center" rowspan="2">QTY</th>
+              <th class="text-center" rowspan="2">Total Sq.Ft</th>
               <th class="text-center" rowspan="2">RATE</th>
               <th class="text-center" rowspan="2">AMOUNT</th>
             </tr>
@@ -298,8 +298,8 @@
               <td class="text-center">
                 {{ item.height }} {{ item.size_height_fraction or '' }}
               </td>
-              <td class="text-center">{{ item.total_sqft }}</td>
               <td class="text-center">{{ item.qty }}</td>
+              <td class="text-center">{{ item.total_sqft }}</td>
               <td class="text-center">
                 {{ item.rate }} {{ item.rate_type or '' }}
               </td>
@@ -309,9 +309,9 @@
             <tr>
               <td colspan="3" class="text-right bold">Total weight in KG :</td>
               <td class="text-center bold">{{ form.total_weight }}</td>
+              <td class="text-center bold">{{ form.total_qty }}</td>
               <td colspan="2" class="text-right bold">Total Sq.Ft :</td>
               <td class="text-center">{{ form.total_sqft }}</td>
-              <td class="text-center bold">{{ form.total_qty }}</td>
               <td class="text-right bold">Total:</td>
               <td class="text-center bold">
                 {{ '%.2f'|format(form.basic_total) }}

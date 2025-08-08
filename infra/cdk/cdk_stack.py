@@ -30,7 +30,7 @@ class CdkStack(Stack):
                 "../backend",
                 file="Dockerfile",
             ),
-            memory_size=512,
+            memory_size=1024,
             timeout=Duration.seconds(30),
             environment={
                 "SUPABASE_URL": os.getenv("SUPABASE_URL", ""),

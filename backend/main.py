@@ -23,6 +23,7 @@ from utils.schema import UserLoginSchema
 import re
 from supabase import Client
 from natsort import natsorted
+from math import ceil
 
 
 # Initialize logging
@@ -418,18 +419,33 @@ async def generate_pdf(
                 height_whole = item.get("size_height", 0)
 
                 width_inches = parse_fractional_inch(width_whole, size_width_fraction)
-
                 height_inches = parse_fractional_inch(
                     height_whole, size_height_fraction
                 )
 
+                width_rounding_value = int(item.get("width_rounding_value", 0))
+                height_rounding_value = int(item.get("height_rounding_value", 0))
+
+                if width_rounding_value and width_rounding_value > 0:
+                    width_inches = (
+                        ceil(width_inches / width_rounding_value) * width_rounding_value
+                    )
+                if height_rounding_value and height_rounding_value > 0:
+                    height_inches = (
+                        ceil(height_inches / height_rounding_value)
+                        * height_rounding_value
+                    )
+
                 width_feet = width_inches / 12
                 height_feet = height_inches / 12
+
             else:
                 width_feet = item.get("size_width", 0)
                 height_feet = item.get("size_height", 0)
 
-            total_sqft = width_feet * height_feet
+            quantity = int(item.get("quantity", 0))
+            total_sqft = width_feet * height_feet * quantity
+
             total_items_sqft += total_sqft
             processed_items.append(
                 {
@@ -452,7 +468,9 @@ async def generate_pdf(
 
         # sort the processed_items by customer_order_no
         # processed_items.sort(key=lambda x: x.get("customer_order_no", ""))
-        processed_items = natsorted(processed_items, key=lambda x: x.get("customer_order_no", ""))
+        processed_items = natsorted(
+            processed_items, key=lambda x: x.get("customer_order_no", "")
+        )
 
         additional_costs = proforma_invoice.get("proforma_additional_costs", [])
         additional_costs_data = list()
