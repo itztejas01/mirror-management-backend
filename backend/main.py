@@ -19,7 +19,7 @@ from utils.constants import (
     RATE_TYPE,
 )
 from datetime import timedelta, datetime
-from utils.schema import UserLoginSchema
+from utils.schema import UserLoginSchema, SizeSheetRequest
 import re
 from supabase import Client
 from natsort import natsorted
@@ -115,6 +115,151 @@ async def latest_invoice_number(
             "Financial year fetched successfully",
             {"invoice_number": invoice_number},
             200,
+        )
+    except Exception as e:
+        print(e)
+        return failure_response(str(e), {}, 500)
+
+
+@app.post("/size-sheet/{customer_id}")
+async def size_sheet(
+    customer_id: str,
+    payload: SizeSheetRequest,
+    authenticated_client: Client = Depends(get_authenticated_client),
+):
+    try:
+        company_details = (
+            authenticated_client.table(SUPABASE_TABLES.company_details)
+            .select("*")
+            .eq("id", 1)
+            .execute()
+        )
+
+        if len(company_details.data) == 0:
+            return failure_response("Company details not found", {}, 404)
+
+        company_details = company_details.data[0]
+
+        customer_resp = (
+            authenticated_client.table(SUPABASE_TABLES.customers)
+            .select(
+                "name,company_name,gstin,phone,email,address,mobile,shipping_address"
+            )
+            .eq("id", customer_id)
+            .limit(1)
+            .execute()
+        )
+
+        if len(customer_resp.data) == 0:
+            return failure_response("Customer not found", {}, 404)
+
+        customer = customer_resp.data[0]
+
+        processed_items = []
+        total_qty = 0
+        total_sqft = 0.0
+        total_weight = 0.0
+
+        for item in payload.items:
+            unit = (item.unit or "ft").lower()
+            total_weight += float(item.weight or 0.0)
+
+            if unit == "mm":
+                width_feet = item.size_width / 304.8
+                height_feet = item.size_height / 304.8
+            elif unit == "inch":
+                width_inches = parse_fractional_inch(
+                    item.size_width, item.size_width_fraction or ""
+                )
+                height_inches = parse_fractional_inch(
+                    item.size_height, item.size_height_fraction or ""
+                )
+
+                width_rounding_value = int(item.width_rounding_value or 0)
+                height_rounding_value = int(item.height_rounding_value or 0)
+
+                if width_rounding_value and width_rounding_value > 0:
+                    width_inches = (
+                        ceil(width_inches / width_rounding_value) * width_rounding_value
+                    )
+
+                if height_rounding_value and height_rounding_value > 0:
+                    height_inches = (
+                        ceil(height_inches / height_rounding_value)
+                        * height_rounding_value
+                    )
+
+                width_feet = width_inches / 12
+                height_feet = height_inches / 12
+            else:
+                width_feet = item.size_width
+                height_feet = item.size_height
+
+            qty = int(item.quantity or 0)
+            line_sqft = width_feet * height_feet * qty
+
+            total_qty += qty
+            total_sqft += line_sqft
+
+            processed_items.append(
+                {
+                    "customer_order_no": item.customer_order_no or "",
+                    "name": item.product_name or "",
+                    "thickness": item.thickness or "",
+                    "width": item.size_width,
+                    "height": item.size_height,
+                    "unit": unit,
+                    "qty": qty,
+                    "weight": f"{(item.weight or 0):.2f}",
+                    "size_width_fraction": item.size_width_fraction or "",
+                    "size_height_fraction": item.size_height_fraction or "",
+                    "total_sqft": f"{line_sqft:.2f}",
+                }
+            )
+        processed_items = natsorted(
+            processed_items, key=lambda x: x.get("customer_order_no", "")
+        )
+
+        form_data = {
+            "company_logo": company_details.get("logo"),
+            "company_name": company_details.get("company_name"),
+            "company_address": company_details.get("address"),
+            "company_mobile": ", ".join(company_details.get("mobile_nos", [])),
+            "company_email": company_details.get("email_id"),
+            "company_gst": company_details.get("gst_no"),
+            "company_pan": company_details.get("pan_no"),
+            "title": payload.title or "Size Sheet",
+            "bill_to": {
+                "name": customer.get("company_name") or customer.get("name"),
+                "address": customer.get("address"),
+                "phone": customer.get("phone"),
+                "mobile": customer.get("mobile"),
+                "gst": customer.get("gstin"),
+            },
+            "ship_to": {
+                "name": customer.get("company_name") or customer.get("name"),
+                "address": customer.get("shipping_address") or customer.get("address"),
+                "phone": customer.get("phone"),
+                "mobile": customer.get("mobile"),
+            },
+            "items": processed_items,
+            "total_qty": total_qty,
+            "total_weight": f"{total_weight:.2f}",
+            "total_sqft": f"{total_sqft:.2f}",
+            "remarks": payload.remarks or "",
+        }
+
+        pdf_context = {"form": form_data}
+
+        pdf_bytes = createPdf(pdf_context, templates, "size_sheet.html")
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Type": "application/pdf",
+                "Content-Disposition": f'attachment; filename="size_sheet_{customer_id}.pdf"',
+            },
         )
     except Exception as e:
         print(e)
@@ -400,13 +545,18 @@ async def generate_pdf(
         items = proforma_invoice.get("proforma_items", [])
 
         # Calculate totals
-        total_qty = sum(item.get("quantity", 0) for item in items)
-        total_weight = sum(item.get("weight", 0) for item in items)
+        # total_qty = sum(item.get("quantity", 0) for item in items)
+        # total_weight = sum(item.get("weight", 0) for item in items)
+        total_qty = 0
+        total_weight = 0
 
         # Process items
         processed_items = []
         total_items_sqft = 0
         for item in items:
+            total_qty += item.get("quantity", 0)
+            total_weight += item.get("weight", 0)
+
             # first convert the width and height to feet
             # if the unit is mm, then convert to feet
             if item.get("unit") == "mm":

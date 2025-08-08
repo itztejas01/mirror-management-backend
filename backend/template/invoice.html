@@ -89,6 +89,7 @@
       }
       .items-table {
         width: 100%;
+        table-layout: fixed;
         border-collapse: collapse;
         padding: 0px;
         /* margin: 18px 0 8px 0; */
@@ -155,6 +156,15 @@
       <div class="invoice-container">
         <!-- Header -->
         <div class="header">
+          {% if form.company_logo %}
+          <div style="border-right: 1px solid #222; margin-right: 10px">
+            <img
+              src="{{ form.company_logo }}"
+              alt="logo"
+              style="max-height: 90px; max-width: 150px"
+            />
+          </div>
+          {% endif %}
           <div class="company-details">
             <div class="company-title">
               {{ form.company_name or 'RISHABHDEV GLASS PVT. LTD.' }}
@@ -309,10 +319,10 @@
             <tr>
               <td colspan="3" class="text-right bold">Total weight in KG :</td>
               <td class="text-center bold">{{ form.total_weight }}</td>
+              <td colspan="2" class="text-right bold">Total:</td>
               <td class="text-center bold">{{ form.total_qty }}</td>
-              <td colspan="2" class="text-right bold">Total Sq.Ft :</td>
-              <td class="text-center">{{ form.total_sqft }}</td>
-              <td class="text-right bold">Total:</td>
+              <td class="text-center bold">{{ form.total_sqft }}</td>
+              <td></td>
               <td class="text-center bold">
                 {{ '%.2f'|format(form.basic_total) }}
               </td>

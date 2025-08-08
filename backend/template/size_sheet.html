@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ form.title or 'Size Sheet' }}</title>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #222;
+        font-size: 12px;
+      }
+
+      .container {
+        width: 100%;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 8px;
+      }
+      .company-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .company-title {
+        font-size: 18px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+      .company-contact,
+      .company-ids {
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .title {
+        text-align: center;
+        font-weight: bold;
+        margin: 8px 0 12px 0;
+        font-size: 16px;
+      }
+
+      .info-grid {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 12px;
+        table-layout: fixed; /* force equal column distribution */
+      }
+      .info-grid td {
+        vertical-align: top;
+        padding: 6px 8px;
+        border: 1px solid #999;
+        width: 50%;
+      }
+      .muted {
+        color: #555;
+      }
+
+      table.items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 6px;
+      }
+      table.items th,
+      table.items td {
+        border: 1px solid #777;
+        padding: 6px;
+        text-align: left;
+      }
+      table.items th {
+        background: #f1f1f1;
+        font-weight: bold;
+      }
+      table.items tfoot td {
+        font-weight: bold;
+      }
+
+      .remarks {
+        margin-top: 14px;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="company-details">
+          <div class="company-title">{{ form.company_name }}</div>
+          <div class="company-contact">
+            {{ form.company_address }}<br />
+            Mobile - {{ form.company_mobile }} . Email: {{ form.company_email }}
+          </div>
+          <div class="company-ids">
+            GST NO.: {{ form.company_gst }} &nbsp;&nbsp; PAN NO.: {{
+            form.company_pan }}
+          </div>
+        </div>
+        {% if form.company_logo %}
+        <div>
+          <img
+            src="{{ form.company_logo }}"
+            alt="logo"
+            style="max-height: 90px; max-width: 150px"
+          />
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="title">{{ form.title or 'Size Sheet' }}</div>
+
+      <table class="info-grid">
+        <colgroup>
+          <col style="width: 50%" />
+          <col style="width: 50%" />
+        </colgroup>
+        <tr>
+          <td>
+            <strong>Bill To</strong><br />
+            {{ form.bill_to.name }}<br />
+            {{ form.bill_to.address }}<br />
+            <span class="muted">Phone:</span> {{ form.bill_to.phone }} &nbsp;
+            <span class="muted">Mobile:</span> {{ form.bill_to.mobile }}<br />
+            <span class="muted">GST:</span> {{ form.bill_to.gst }}
+          </td>
+          <td>
+            <strong>Ship To</strong><br />
+            {{ form.ship_to.name }}<br />
+            {{ form.ship_to.address }}<br />
+            <span class="muted">Phone:</span> {{ form.ship_to.phone }} &nbsp;
+            <span class="muted">Mobile:</span> {{ form.ship_to.mobile }}
+          </td>
+        </tr>
+      </table>
+
+      <table class="items">
+        <thead>
+          <tr>
+            <th style="width: 28px">#</th>
+            <th>Cust. Order No</th>
+            <th>Product</th>
+            <th>Thickness</th>
+            <th style="width: 80px">Width</th>
+            <th style="width: 80px">Height</th>
+            <th style="width: 54px">Unit</th>
+            <th style="width: 48px">Qty</th>
+            <th style="width: 80px">Total Sq.Ft</th>
+            <th style="width: 70px">Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in form['items'] %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.customer_order_no }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.thickness }}</td>
+            <td>
+              {% if item.unit == 'inch' and item.size_width_fraction %} {{
+              item.width }} {{ item.size_width_fraction }} {% else %} {{
+              item.width }} {% endif %}
+            </td>
+            <td>
+              {% if item.unit == 'inch' and item.size_height_fraction %} {{
+              item.height }} {{ item.size_height_fraction }} {% else %} {{
+              item.height }} {% endif %}
+            </td>
+            <td>{{ item.unit|upper }}</td>
+            <td>{{ item.qty }}</td>
+            <td>{{ item.total_sqft }}</td>
+            <td>{{ item.weight }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="7" style="text-align: right">Total:</td>
+            <td>{{ form.total_qty }}</td>
+            <td>{{ form.total_sqft }}</td>
+            <td>{{ form.total_weight }}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      {% if form.remarks %}
+      <div class="remarks"><strong>Remarks:</strong> {{ form.remarks }}</div>
+      {% endif %}
+    </div>
+  </body>
+</html>

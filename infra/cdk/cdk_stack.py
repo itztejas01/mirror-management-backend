@@ -155,3 +155,12 @@ class CdkStack(Stack):
             pdf_lambda_integration,
             method_responses=pdf_method_response,
         )
+
+        # Size sheet endpoint (PDF, POST)
+        size_sheet = api.root.add_resource("size-sheet")
+        size_sheet_with_id = size_sheet.add_resource("{customer_id}")
+        size_sheet_with_id.add_method(
+            "POST",
+            pdf_lambda_integration,
+            method_responses=pdf_method_response,
+        )
