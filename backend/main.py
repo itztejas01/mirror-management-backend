@@ -163,10 +163,13 @@ async def size_sheet(
         for item in payload.items:
             unit = (item.unit or "ft").lower()
             total_weight += float(item.weight or 0.0)
+            qty = int(item.quantity or 0)
 
             if unit == "mm":
-                width_feet = item.size_width / 304.8
-                height_feet = item.size_height / 304.8
+                width_feet = float(item.size_width)
+                height_feet = float(item.size_height)
+                line_sqft = width_feet * height_feet * qty * 10.764 / 1000000
+                total_sqft += line_sqft
             elif unit == "inch":
                 width_inches = parse_fractional_inch(
                     item.size_width, item.size_width_fraction or ""
@@ -175,31 +178,31 @@ async def size_sheet(
                     item.size_height, item.size_height_fraction or ""
                 )
 
-                # width_rounding_value = int(item.width_rounding_value or 0)
-                # height_rounding_value = int(item.height_rounding_value or 0)
+                width_rounding_value = int(item.width_rounding_value or 0)
+                height_rounding_value = int(item.height_rounding_value or 0)
 
-                # if width_rounding_value and width_rounding_value > 0:
-                #     width_inches = (
-                #         ceil(width_inches / width_rounding_value) * width_rounding_value
-                #     )
+                if width_rounding_value and width_rounding_value > 0:
+                    width_inches = (
+                        ceil(width_inches / width_rounding_value) * width_rounding_value
+                    )
 
-                # if height_rounding_value and height_rounding_value > 0:
-                #     height_inches = (
-                #         ceil(height_inches / height_rounding_value)
-                #         * height_rounding_value
-                #     )
+                if height_rounding_value and height_rounding_value > 0:
+                    height_inches = (
+                        ceil(height_inches / height_rounding_value)
+                        * height_rounding_value
+                    )
 
-                width_feet = width_inches / 12
-                height_feet = height_inches / 12
+                width_feet = width_inches
+                height_feet = height_inches
+                line_sqft = width_feet * height_feet * qty / 144
+                total_sqft += line_sqft
             else:
-                width_feet = item.size_width
-                height_feet = item.size_height
-
-            qty = int(item.quantity or 0)
-            line_sqft = width_feet * height_feet * qty
+                width_feet = float(item.size_width)
+                height_feet = float(item.size_height)
+                line_sqft = width_feet * height_feet * qty
+                total_sqft += line_sqft
 
             total_qty += qty
-            total_sqft += line_sqft
 
             processed_items.append(
                 {
@@ -554,14 +557,19 @@ async def generate_pdf(
         processed_items = []
         total_items_sqft = 0
         for item in items:
-            total_qty += item.get("quantity", 0)
+            quantity = int(item.get("quantity", 0))
             total_weight += item.get("weight", 0)
+            total_qty += quantity
 
             # first convert the width and height to feet
             # if the unit is mm, then convert to feet
             if item.get("unit") == "mm":
-                width_feet = item.get("size_width", 0) / 304.8
-                height_feet = item.get("size_height", 0) / 304.8
+                width_feet = float(item.get("size_width", 0))
+                height_feet = float(item.get("size_height", 0))
+
+                total_sqft = width_feet * height_feet * quantity * 10.764 / 1000000
+
+                total_items_sqft += total_sqft
             elif item.get("unit") == "inch":
                 size_width_fraction = item.get("size_width_fraction", "")
                 size_height_fraction = item.get("size_height_fraction", "")
@@ -573,30 +581,34 @@ async def generate_pdf(
                     height_whole, size_height_fraction
                 )
 
-                # width_rounding_value = int(item.get("width_rounding_value", 0))
-                # height_rounding_value = int(item.get("height_rounding_value", 0))
+                width_rounding_value = int(item.get("width_rounding_value", 0))
+                height_rounding_value = int(item.get("height_rounding_value", 0))
 
-                # if width_rounding_value and width_rounding_value > 0:
-                #     width_inches = (
-                #         ceil(width_inches / width_rounding_value) * width_rounding_value
-                #     )
-                # if height_rounding_value and height_rounding_value > 0:
-                #     height_inches = (
-                #         ceil(height_inches / height_rounding_value)
-                #         * height_rounding_value
-                #     )
+                if width_rounding_value and width_rounding_value > 0:
+                    width_inches = (
+                        ceil(width_inches / width_rounding_value) * width_rounding_value
+                    )
+                if height_rounding_value and height_rounding_value > 0:
+                    height_inches = (
+                        ceil(height_inches / height_rounding_value)
+                        * height_rounding_value
+                    )
 
-                width_feet = width_inches / 12
-                height_feet = height_inches / 12
+                width_feet = width_inches
+                height_feet = height_inches
+
+                total_sqft = width_feet * height_feet * quantity / 144
+
+                total_items_sqft += total_sqft
 
             else:
                 width_feet = item.get("size_width", 0)
                 height_feet = item.get("size_height", 0)
 
-            quantity = int(item.get("quantity", 0))
-            total_sqft = width_feet * height_feet * quantity
+                total_sqft = width_feet * height_feet * quantity
 
-            total_items_sqft += total_sqft
+                total_items_sqft += total_sqft
+
             processed_items.append(
                 {
                     "customer_order_no": item.get("customer_order_no", ""),
