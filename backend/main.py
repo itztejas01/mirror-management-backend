@@ -175,19 +175,19 @@ async def size_sheet(
                     item.size_height, item.size_height_fraction or ""
                 )
 
-                width_rounding_value = int(item.width_rounding_value or 0)
-                height_rounding_value = int(item.height_rounding_value or 0)
+                # width_rounding_value = int(item.width_rounding_value or 0)
+                # height_rounding_value = int(item.height_rounding_value or 0)
 
-                if width_rounding_value and width_rounding_value > 0:
-                    width_inches = (
-                        ceil(width_inches / width_rounding_value) * width_rounding_value
-                    )
+                # if width_rounding_value and width_rounding_value > 0:
+                #     width_inches = (
+                #         ceil(width_inches / width_rounding_value) * width_rounding_value
+                #     )
 
-                if height_rounding_value and height_rounding_value > 0:
-                    height_inches = (
-                        ceil(height_inches / height_rounding_value)
-                        * height_rounding_value
-                    )
+                # if height_rounding_value and height_rounding_value > 0:
+                #     height_inches = (
+                #         ceil(height_inches / height_rounding_value)
+                #         * height_rounding_value
+                #     )
 
                 width_feet = width_inches / 12
                 height_feet = height_inches / 12
@@ -573,18 +573,18 @@ async def generate_pdf(
                     height_whole, size_height_fraction
                 )
 
-                width_rounding_value = int(item.get("width_rounding_value", 0))
-                height_rounding_value = int(item.get("height_rounding_value", 0))
+                # width_rounding_value = int(item.get("width_rounding_value", 0))
+                # height_rounding_value = int(item.get("height_rounding_value", 0))
 
-                if width_rounding_value and width_rounding_value > 0:
-                    width_inches = (
-                        ceil(width_inches / width_rounding_value) * width_rounding_value
-                    )
-                if height_rounding_value and height_rounding_value > 0:
-                    height_inches = (
-                        ceil(height_inches / height_rounding_value)
-                        * height_rounding_value
-                    )
+                # if width_rounding_value and width_rounding_value > 0:
+                #     width_inches = (
+                #         ceil(width_inches / width_rounding_value) * width_rounding_value
+                #     )
+                # if height_rounding_value and height_rounding_value > 0:
+                #     height_inches = (
+                #         ceil(height_inches / height_rounding_value)
+                #         * height_rounding_value
+                #     )
 
                 width_feet = width_inches / 12
                 height_feet = height_inches / 12
