@@ -245,17 +245,18 @@ async def size_sheet(
             "company_pan": company_details.get("pan_no"),
             "title": payload.title or "Size Sheet",
             "bill_to": {
-                "name": customer.get("company_name") or customer.get("name"),
-                "address": customer.get("address"),
-                "phone": customer.get("phone"),
-                "mobile": customer.get("mobile"),
-                "gst": customer.get("gstin"),
+                "name": customer.get("company_name", "") or customer.get("name", ""),
+                "address": customer.get("address", ""),
+                "phone": customer.get("phone", ""),
+                "mobile": customer.get("mobile", ""),
+                "gst": customer.get("gstin", ""),
             },
             "ship_to": {
-                "name": customer.get("company_name") or customer.get("name"),
-                "address": customer.get("shipping_address") or customer.get("address"),
-                "phone": customer.get("phone"),
-                "mobile": customer.get("mobile"),
+                "name": customer.get("company_name", "") or customer.get("name", ""),
+                "address": customer.get("shipping_address", "")
+                or customer.get("address", ""),
+                "phone": customer.get("phone", ""),
+                "mobile": customer.get("mobile", ""),
             },
             "items": processed_items,
             "has_inch_unit": any(

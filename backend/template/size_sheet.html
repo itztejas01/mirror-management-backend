@@ -6,14 +6,14 @@
     <title>{{ form.title or 'Size Sheet' }}</title>
     <style>
       @page {
-        size: A4 portrait;
+        size: A5 portrait;
         margin: 10mm;
       }
 
       body {
         font-family: Arial, Helvetica, sans-serif;
         color: #222;
-        font-size: 12px;
+        font-size: 11px; /* compact for A5 */
       }
 
       .container {
@@ -34,21 +34,16 @@
         gap: 4px;
       }
       .company-title {
-        font-size: 18px;
+        font-size: 16px; /* smaller for A5 */
         font-weight: bold;
         letter-spacing: 0.5px;
-      }
-      .company-contact,
-      .company-ids {
-        font-size: 11px;
-        line-height: 1.4;
       }
 
       .title {
         text-align: center;
         font-weight: bold;
-        margin: 8px 0 12px 0;
-        font-size: 16px;
+        margin: 6px 0 8px 0;
+        font-size: 14px;
       }
 
       .info-grid {
@@ -59,7 +54,7 @@
       }
       .info-grid td {
         vertical-align: top;
-        padding: 6px 8px;
+        padding: 4px 6px; /* tighter for A5 */
         border: 1px solid #999;
         width: 50%;
       }
@@ -70,13 +65,14 @@
       table.items {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 6px;
+        margin-top: 4px;
       }
       table.items th,
       table.items td {
         border: 1px solid #777;
-        padding: 6px;
+        padding: 4px; /* tighter for A5 */
         text-align: left;
+        font-size: 10px;
       }
       table.items th {
         background: #f1f1f1;
@@ -129,16 +125,20 @@
             <strong>Bill To</strong><br />
             {{ form.bill_to.name }}<br />
             {{ form.bill_to.address }}<br />
-            <span class="muted">Phone:</span> {{ form.bill_to.phone }} &nbsp;
-            <span class="muted">Mobile:</span> {{ form.bill_to.mobile }}<br />
-            <span class="muted">GST:</span> {{ form.bill_to.gst }}
+            <span class="muted">Phone:</span> {{ form.bill_to.phone }} &nbsp; {%
+            if form.bill_to.mobile %} <span class="muted">Mobile:</span> {{
+            form.bill_to.mobile }} {% endif %}
+            <br />
+            {% if form.bill_to.gst %}
+            <span class="muted">GST:</span> {{ form.bill_to.gst }} {% endif %}
           </td>
           <td>
             <strong>Ship To</strong><br />
             {{ form.ship_to.name }}<br />
             {{ form.ship_to.address }}<br />
-            <span class="muted">Phone:</span> {{ form.ship_to.phone }} &nbsp;
-            <span class="muted">Mobile:</span> {{ form.ship_to.mobile }}
+            <span class="muted">Phone:</span> {{ form.ship_to.phone }} &nbsp; {%
+            if form.ship_to.mobile %} <span class="muted">Mobile:</span> {{
+            form.ship_to.mobile }} {% endif %}
           </td>
         </tr>
       </table>
@@ -146,23 +146,18 @@
       <table class="items">
         <thead>
           <tr>
-            <th style="width: 28px">#</th>
-            <th style="width: 90px">Cust. Order No</th>
-            <th style="width: 75px">
+            <th style="width: 24px">#</th>
+            <th style="width: 80px">Cust. Order No</th>
+            <th style="width: 60px">
               WIDTH <br />
               ({{ form['items'][0].unit if form['items']|length > 0 else '' }})
             </th>
-            <th style="width: 75px">
+            <th style="width: 60px">
               HEIGHT <br />
               ({{ form['items'][0].unit if form['items']|length > 0 else '' }})
             </th>
-            {% if form.has_inch_unit %}
-            <th style="width: 75px">CHG. WIDTH</th>
-            <th style="width: 75px">CHG. HEIGHT</th>
-            {% endif %}
-            <th style="width: 48px">Qty</th>
-            <th style="width: 80px">Total Sq.Ft</th>
-            <th style="width: 70px">Weight</th>
+            <th style="width: 44px">Qty</th>
+            <th style="width: 64px">Total Sq.Ft</th>
           </tr>
         </thead>
         <tbody>
@@ -172,7 +167,7 @@
           ns.group %}
           <tr>
             <td
-              colspan="{{ 8 if not form.has_inch_unit else 10 }}"
+              colspan="6"
               style="
                 background: #f1f1f1;
                 font-weight: bold;
@@ -197,22 +192,16 @@
               item.height }} {{ item.size_height_fraction }} {% else %} {{
               item.height }} {% endif %}
             </td>
-            {% if form.has_inch_unit %}
-            <td>{{ item.chargeable_width }}</td>
-            <td>{{ item.chargeable_height }}</td>
-            {% endif %}
             <td>{{ item.qty }}</td>
             <td>{{ item.total_sqft }}</td>
-            <td>{{ item.weight }}</td>
           </tr>
           {% endfor %}
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="6" style="text-align: right">Total:</td>
+            <td colspan="4" style="text-align: right">Total:</td>
             <td>{{ form.total_qty }}</td>
             <td>{{ form.total_sqft }}</td>
-            <td>{{ form.total_weight }}</td>
           </tr>
         </tfoot>
       </table>

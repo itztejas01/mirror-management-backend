@@ -313,7 +313,7 @@
             item.name)|trim %} {% if loop.first or group_label != ns.group %}
             <tr>
               <td
-                colspan="10"
+                colspan="{{10 if form.has_inch_unit else 8}}"
                 style="
                   background: #f1f1f1;
                   font-weight: bold;
@@ -348,7 +348,7 @@
             <tr>
               <td colspan="3" class="text-right bold">Total weight in KG :</td>
               <td class="text-center bold">{{ form.total_weight }}</td>
-              <td colspan="2" class="text-right bold">Total:</td>
+              <td colspan="3" class="text-right bold">Total:</td>
               <td class="text-center bold">{{ form.total_qty }}</td>
               <td class="text-center bold">{{ form.total_sqft }}</td>
               <td></td>
