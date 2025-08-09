@@ -147,24 +147,46 @@
         <thead>
           <tr>
             <th style="width: 28px">#</th>
-            <th>Cust. Order No</th>
-            <th>Product</th>
-            <th>Thickness</th>
-            <th style="width: 80px">Width</th>
-            <th style="width: 80px">Height</th>
-            <th style="width: 54px">Unit</th>
+            <th style="width: 90px">Cust. Order No</th>
+            <th style="width: 75px">
+              WIDTH <br />
+              ({{ form['items'][0].unit if form['items']|length > 0 else '' }})
+            </th>
+            <th style="width: 75px">
+              HEIGHT <br />
+              ({{ form['items'][0].unit if form['items']|length > 0 else '' }})
+            </th>
+            {% if form.has_inch_unit %}
+            <th style="width: 75px">CHG. WIDTH</th>
+            <th style="width: 75px">CHG. HEIGHT</th>
+            {% endif %}
             <th style="width: 48px">Qty</th>
             <th style="width: 80px">Total Sq.Ft</th>
             <th style="width: 70px">Weight</th>
           </tr>
         </thead>
         <tbody>
-          {% for item in form['items'] %}
+          {% set ns = namespace(group='') %} {% for item in form['items'] %} {%
+          set group_label = (item.name ~ (item.thickness and (' - ' ~
+          item.thickness) or ''))|trim %} {% if loop.first or group_label !=
+          ns.group %}
+          <tr>
+            <td
+              colspan="{{ 8 if not form.has_inch_unit else 10 }}"
+              style="
+                background: #f1f1f1;
+                font-weight: bold;
+                text-transform: uppercase;
+                text-align: center;
+              "
+            >
+              {{ group_label }}
+            </td>
+          </tr>
+          {% set ns.group = group_label %} {% endif %}
           <tr>
             <td>{{ loop.index }}</td>
             <td>{{ item.customer_order_no }}</td>
-            <td>{{ item.name }}</td>
-            <td>{{ item.thickness }}</td>
             <td>
               {% if item.unit == 'inch' and item.size_width_fraction %} {{
               item.width }} {{ item.size_width_fraction }} {% else %} {{
@@ -175,7 +197,10 @@
               item.height }} {{ item.size_height_fraction }} {% else %} {{
               item.height }} {% endif %}
             </td>
-            <td>{{ item.unit|upper }}</td>
+            {% if form.has_inch_unit %}
+            <td>{{ item.chargeable_width }}</td>
+            <td>{{ item.chargeable_height }}</td>
+            {% endif %}
             <td>{{ item.qty }}</td>
             <td>{{ item.total_sqft }}</td>
             <td>{{ item.weight }}</td>
@@ -184,7 +209,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="7" style="text-align: right">Total:</td>
+            <td colspan="6" style="text-align: right">Total:</td>
             <td>{{ form.total_qty }}</td>
             <td>{{ form.total_sqft }}</td>
             <td>{{ form.total_weight }}</td>

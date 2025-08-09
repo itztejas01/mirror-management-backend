@@ -271,31 +271,63 @@
         <table class="items-table">
           <thead>
             <tr>
-              <th class="text-center" rowspan="2">SR.NO.</th>
-              <th class="text-center" rowspan="2">CUSTOMER ORDER NO.</th>
-              <th rowspan="2">ITEM NAME</th>
-              <th class="text-center" rowspan="2">WT(KG)</th>
+              <th class="text-center" style="width: 32px" rowspan="2">SR</th>
+              <th class="text-center" style="width: 90px" rowspan="2">
+                CUST. ORD
+              </th>
+              <th class="text-center" style="width: 60px" rowspan="2">
+                WT(KG)
+              </th>
               <th class="text-center" colspan="2">ACTUAL SIZE</th>
-              <th class="text-center" rowspan="2">QTY</th>
-              <th class="text-center" rowspan="2">Total Sq.Ft</th>
-              <th class="text-center" rowspan="2">RATE</th>
-              <th class="text-center" rowspan="2">AMOUNT</th>
+              {% if form.has_inch_unit %}
+              <th class="text-center" colspan="2">CHARGEABLE SIZE (INCH)</th>
+              {% endif %}
+              <th class="text-center" style="width: 48px" rowspan="2">QTY</th>
+              <th class="text-center" style="width: 70px" rowspan="2">SQ.FT</th>
+              <th class="text-center" style="width: 70px" rowspan="2">
+                RATE ({{ form['proforma_items'][0].rate_type if
+                form['proforma_items']|length > 0 else '' }})
+              </th>
+              <th class="text-center" style="width: 80px" rowspan="2">
+                AMOUNT
+              </th>
             </tr>
             <tr>
               <th class="text-center">
-                WIDTH ({{ form.proforma_items[0].unit or '' }})
+                WIDTH<br />({{ form['proforma_items'][0].unit if
+                form['proforma_items']|length > 0 else '' }})
               </th>
               <th class="text-center">
-                HEIGHT ({{ form.proforma_items[0].unit or '' }})
+                HEIGHT<br />({{ form['proforma_items'][0].unit if
+                form['proforma_items']|length > 0 else '' }})
               </th>
+              {% if form.has_inch_unit %}
+              <th class="text-center">WIDTH</th>
+              <th class="text-center">HEIGHT</th>
+              {% endif %}
             </tr>
           </thead>
           <tbody>
-            {% for item in form.proforma_items %}
+            {% set ns = namespace(group='') %} {% for item in
+            form.proforma_items %} {% set group_label = (item.thickness ~ ' ' ~
+            item.name)|trim %} {% if loop.first or group_label != ns.group %}
+            <tr>
+              <td
+                colspan="10"
+                style="
+                  background: #f1f1f1;
+                  font-weight: bold;
+                  text-transform: uppercase;
+                  text-align: center;
+                "
+              >
+                {{ group_label }}
+              </td>
+            </tr>
+            {% set ns.group = group_label %} {% endif %}
             <tr>
               <td class="text-center">{{ loop.index }}</td>
               <td class="text-center">{{ item.customer_order_no }}</td>
-              <td>{{ item.thickness }} {{ item.name }}</td>
               <td class="text-center">{{ item.weight }}</td>
               <td class="text-center">
                 {{ item.width }} {{ item.size_width_fraction or '' }}
@@ -303,11 +335,13 @@
               <td class="text-center">
                 {{ item.height }} {{ item.size_height_fraction or '' }}
               </td>
+              {% if form.has_inch_unit %}
+              <td class="text-center">{{ item.chargeable_width }}</td>
+              <td class="text-center">{{ item.chargeable_height }}</td>
+              {% endif %}
               <td class="text-center">{{ item.qty }}</td>
               <td class="text-center">{{ item.total_sqft }}</td>
-              <td class="text-center">
-                {{ item.rate }} {{ item.rate_type or '' }}
-              </td>
+              <td class="text-center">{{ item.rate }}</td>
               <td class="text-center">{{ '%.2f'|format(item.amount) }}</td>
             </tr>
             {% endfor %}

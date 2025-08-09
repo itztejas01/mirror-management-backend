@@ -161,6 +161,9 @@ async def size_sheet(
         total_weight = 0.0
 
         for item in payload.items:
+            # Reset per-item chargeable sizes
+            chargeable_width = 0.0
+            chargeable_height = 0.0
             unit = (item.unit or "ft").lower()
             total_weight += float(item.weight or 0.0)
             qty = int(item.quantity or 0)
@@ -192,6 +195,9 @@ async def size_sheet(
                         * height_rounding_value
                     )
 
+                chargeable_width = width_inches
+                chargeable_height = height_inches
+
                 width_feet = width_inches
                 height_feet = height_inches
                 line_sqft = width_feet * height_feet * qty / 144
@@ -209,8 +215,14 @@ async def size_sheet(
                     "customer_order_no": item.customer_order_no or "",
                     "name": item.product_name or "",
                     "thickness": item.thickness or "",
-                    "width": item.size_width,
-                    "height": item.size_height,
+                    "chargeable_width": chargeable_width,
+                    "chargeable_height": chargeable_height,
+                    "width": (
+                        int(item.size_width) if unit == "inch" else item.size_width
+                    ),
+                    "height": (
+                        int(item.size_height) if unit == "inch" else item.size_height
+                    ),
                     "unit": unit,
                     "qty": qty,
                     "weight": f"{(item.weight or 0):.2f}",
@@ -246,6 +258,9 @@ async def size_sheet(
                 "mobile": customer.get("mobile"),
             },
             "items": processed_items,
+            "has_inch_unit": any(
+                (it.unit or "").lower() == "inch" for it in payload.items
+            ),
             "total_qty": total_qty,
             "total_weight": f"{total_weight:.2f}",
             "total_sqft": f"{total_sqft:.2f}",
@@ -253,6 +268,7 @@ async def size_sheet(
         }
 
         pdf_context = {"form": form_data}
+        print("pdf_context: ", pdf_context)
 
         pdf_bytes = createPdf(pdf_context, templates, "size_sheet.html")
 
@@ -557,6 +573,9 @@ async def generate_pdf(
         processed_items = []
         total_items_sqft = 0
         for item in items:
+            # Reset per-item chargeable sizes
+            chargeable_width = 0.0
+            chargeable_height = 0.0
             quantity = int(item.get("quantity", 0))
             total_weight += item.get("weight", 0)
             total_qty += quantity
@@ -594,6 +613,8 @@ async def generate_pdf(
                         * height_rounding_value
                     )
 
+                chargeable_width = width_inches
+                chargeable_height = height_inches
                 width_feet = width_inches
                 height_feet = height_inches
 
@@ -614,6 +635,8 @@ async def generate_pdf(
                     "customer_order_no": item.get("customer_order_no", ""),
                     "name": item.get("products", {}).get("name", ""),
                     "weight": f'{item.get("weight", 0):.2f}',
+                    "chargeable_width": chargeable_width,
+                    "chargeable_height": chargeable_height,
                     "width": item.get("size_width", ""),
                     "height": item.get("size_height", ""),
                     "total_sqft": f"{total_sqft:.2f}",
@@ -728,6 +751,9 @@ async def generate_pdf(
                 "mobile": customer.get("mobile"),
             },
             "proforma_items": processed_items,
+            "has_inch_unit": any(
+                (it.get("unit", "").lower() == "inch") for it in items
+            ),
             "total_qty": total_qty,
             "basic_total": proforma_invoice.get("total_amount", 0),
             "total_cost_with_additional_cost": f"{total_cost_with_additional_cost:.2f}",
