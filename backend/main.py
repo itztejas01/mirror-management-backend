@@ -715,9 +715,10 @@ async def generate_pdf(
             "company_email": company_details.get("email_id"),
             "company_gst": company_details.get("gst_no"),
             "company_pan": company_details.get("pan_no"),
-            "proforma_no": proforma_invoice.get("pi_name"),
+            "proforma_no": proforma_invoice.get("pi_no"),
             "sales_person": sales_person,
             "pi_date": convertDateToProperFormat(proforma_invoice.get("created_at")),
+            "payment_terms": proforma_invoice.get("payment_terms", ""),
             "destination": (
                 proforma_invoice.get("destination", "N/A")
                 if proforma_invoice.get("destination") is not None

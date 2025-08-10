@@ -10,6 +10,10 @@ env:
   AWS_REGION: ap-south-1
   CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
   CDK_DEFAULT_REGION: ap-south-1
+  PRUNE_ECR: "false" # set to "true" to enable ECR pruning of CDK asset images
+  # Optional: set to a specific repo name to prune that repository instead of the default CDK assets repo
+  # Example: ECR_REPO_NAME: your-app-repository
+  ECR_REPO_NAME: "cdk-hnb659fds-container-assets-${{ secrets.AWS_ACCOUNT_ID }}-ap-south-1"
 permissions:
   contents: read
   id-token: write
@@ -63,6 +67,47 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           DEFAULT_AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: Prune ECR images (keep last 2)
+        if: env.PRUNE_ECR == 'true'
+        run: |
+          ACCOUNT_ID=${{ env.CDK_DEFAULT_ACCOUNT }}
+          REGION=${{ env.AWS_REGION }}
+          REPO_NAME="${{ env.ECR_REPO_NAME }}"
+          if [ -z "$REPO_NAME" ]; then
+            REPO_NAME="cdk-hnb659fds-container-assets-${ACCOUNT_ID}-${REGION}"
+          fi
+
+          echo "Target ECR repository: $REPO_NAME"
+
+          # If repository doesn't exist yet, skip pruning
+          if ! aws ecr describe-repositories --repository-names "$REPO_NAME" >/dev/null 2>&1; then
+            echo "Repository $REPO_NAME does not exist yet. Skipping prune."
+            exit 0
+          fi
+
+          POLICY='{"rules":[{"rulePriority":1,"description":"Keep last 2 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":2},"action":{"type":"expire"}}]}'
+
+          # Apply/ensure lifecycle policy (non-fatal if already present)
+          aws ecr put-lifecycle-policy --repository-name "$REPO_NAME" --lifecycle-policy-text "$POLICY" || true
+
+          # Immediate prune to keep only the latest 2 by imagePushedAt
+          DIGESTS=$(aws ecr describe-images --repository-name "$REPO_NAME" --query 'sort_by(imageDetails,&imagePushedAt)[].imageDigest' --output text || true)
+          if [ -z "$DIGESTS" ]; then
+            echo "No images found in $REPO_NAME"
+            exit 0
+          fi
+
+          COUNT=$(echo "$DIGESTS" | wc -w | tr -d ' ')
+          if [ "$COUNT" -le 2 ]; then
+            echo "Nothing to prune. Image count: $COUNT"
+            exit 0
+          fi
+
+          # Delete all but the last 2 (most recent images are at the end after sort)
+          TO_DELETE=$(echo "$DIGESTS" | awk -v n="$COUNT" '{for(i=1;i<=NF-2;i++) printf "imageDigest=%s ", $i}')
+          echo "Deleting older images..."
+          aws ecr batch-delete-image --repository-name "$REPO_NAME" --image-ids $TO_DELETE | cat
 
       - name: Get API Gateway URL
         working-directory: ./infra

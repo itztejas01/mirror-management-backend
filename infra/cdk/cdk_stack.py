@@ -2,15 +2,11 @@ from aws_cdk import (
     Stack,
     aws_lambda as _lambda,
     aws_apigateway as apigw,
-    aws_s3 as s3,
     aws_iam as iam,
     Duration,
 )
 from constructs import Construct
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Default to ap-south-1 if not set
 DEFAULT_REGION = os.getenv("DEFAULT_AWS_REGION", "ap-south-1")

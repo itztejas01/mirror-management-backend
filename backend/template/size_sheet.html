@@ -86,6 +86,25 @@
         margin-top: 14px;
         font-size: 11px;
       }
+
+      .signature-section {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .sign-field {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        width: 48%;
+        font-size: 11px;
+      }
+      .sign-field .line {
+        flex: 1;
+        height: 14px;
+        border-bottom: 1px solid #333;
+      }
     </style>
   </head>
   <body>
@@ -148,6 +167,7 @@
           <tr>
             <th style="width: 24px">#</th>
             <th style="width: 80px">Cust. Order No</th>
+            <th style="width: 80px">Item</th>
             <th style="width: 60px">
               WIDTH <br />
               ({{ form['items'][0].unit if form['items']|length > 0 else '' }})
@@ -161,27 +181,13 @@
           </tr>
         </thead>
         <tbody>
-          {% set ns = namespace(group='') %} {% for item in form['items'] %} {%
-          set group_label = (item.name ~ (item.thickness and (' - ' ~
-          item.thickness) or ''))|trim %} {% if loop.first or group_label !=
-          ns.group %}
-          <tr>
-            <td
-              colspan="6"
-              style="
-                background: #f1f1f1;
-                font-weight: bold;
-                text-transform: uppercase;
-                text-align: center;
-              "
-            >
-              {{ group_label }}
-            </td>
-          </tr>
-          {% set ns.group = group_label %} {% endif %}
+          {% for item in form['items'] %} {% set group_label = (item.name ~
+          (item.thickness and (' - ' ~ item.thickness) or ''))|trim %}
           <tr>
             <td>{{ loop.index }}</td>
+
             <td>{{ item.customer_order_no }}</td>
+            <td>{{ group_label }}</td>
             <td>
               {% if item.unit == 'inch' and item.size_width_fraction %} {{
               item.width }} {{ item.size_width_fraction }} {% else %} {{
@@ -199,7 +205,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="4" style="text-align: right">Total:</td>
+            <td colspan="5" style="text-align: right">Total:</td>
             <td>{{ form.total_qty }}</td>
             <td>{{ form.total_sqft }}</td>
           </tr>
@@ -209,6 +215,17 @@
       {% if form.remarks %}
       <div class="remarks"><strong>Remarks:</strong> {{ form.remarks }}</div>
       {% endif %}
+
+      <div class="signature-section">
+        <div class="sign-field">
+          <span><strong>Delivery Sign</strong>:</span>
+          <span class="line"></span>
+        </div>
+        <div class="sign-field">
+          <span><strong>Contact Number</strong>:</span>
+          <span class="line"></span>
+        </div>
+      </div>
     </div>
   </body>
 </html>

@@ -92,14 +92,11 @@
         table-layout: fixed;
         border-collapse: collapse;
         padding: 0px;
-        /* margin: 18px 0 8px 0; */
-        margin: 0;
         border: 1px solid #222;
       }
       .items-table th,
       .items-table td {
         border: 1px solid #222;
-        padding: 6px 4px;
         font-size: 12px;
       }
       .items-table th {
@@ -176,7 +173,7 @@
             </div>
             <div class="company-ids">
               GST NO. : {{ form.company_gst }} &nbsp;&nbsp;&nbsp; PAN NO. : {{
-              form.company_pan or 'AALCR8612B' }}
+              form.company_pan or '' }}
             </div>
           </div>
         </div>
@@ -201,10 +198,10 @@
               >
                 <span class="bold">{{ form.bill_to.name }}</span><br />
                 {{ form.bill_to.address }}<br />
-                {% if form.bill_to.mobile %} Ph. No.: {{ form.bill_to.phone }}
-                Mobile No.: {{ form.bill_to.mobile }}<br />
-                {% endif %} {% if form.bill_to.gst %}GST NO. : {{
-                form.bill_to.gst }}<br />{% endif %}
+                {% if form.bill_to.phone %} Ph. No.: {{ form.bill_to.phone }} {%
+                endif %} {% if form.bill_to.mobile %} Mobile No.: {{
+                form.bill_to.mobile }}<br />{% endif %} {% if form.bill_to.gst
+                %}GST NO. : {{ form.bill_to.gst }}<br />{% endif %}
               </div>
               <div class="section-title" style="margin-top: 10px">
                 SHIP TO :
@@ -243,8 +240,8 @@
                 </tr>
                 <tr>
                   <td colspan="2" class="border-bottom">
-                    <span class="bold">Payment Term:</span> {{ form.payment_term
-                    }}
+                    <span class="bold">Payment Term:</span> {{
+                    form.payment_terms }}
                   </td>
                 </tr>
                 <tr>
@@ -275,6 +272,7 @@
               <th class="text-center" style="width: 90px" rowspan="2">
                 CUST. ORD
               </th>
+              <th class="text-center" style="width: 80px" rowspan="2">ITEM</th>
               <th class="text-center" style="width: 60px" rowspan="2">
                 WT(KG)
               </th>
@@ -308,26 +306,12 @@
             </tr>
           </thead>
           <tbody>
-            {% set ns = namespace(group='') %} {% for item in
-            form.proforma_items %} {% set group_label = (item.thickness ~ ' ' ~
-            item.name)|trim %} {% if loop.first or group_label != ns.group %}
-            <tr>
-              <td
-                colspan="{{10 if form.has_inch_unit else 8}}"
-                style="
-                  background: #f1f1f1;
-                  font-weight: bold;
-                  text-transform: uppercase;
-                  text-align: center;
-                "
-              >
-                {{ group_label }}
-              </td>
-            </tr>
-            {% set ns.group = group_label %} {% endif %}
+            {% for item in form.proforma_items %} {% set group_label =
+            (item.thickness ~ ' ' ~ item.name)|trim %}
             <tr>
               <td class="text-center">{{ loop.index }}</td>
               <td class="text-center">{{ item.customer_order_no }}</td>
+              <td class="text-center">{{ group_label }}</td>
               <td class="text-center">{{ item.weight }}</td>
               <td class="text-center">
                 {{ item.width }} {{ item.size_width_fraction or '' }}
@@ -346,7 +330,7 @@
             </tr>
             {% endfor %}
             <tr>
-              <td colspan="3" class="text-right bold">Total weight in KG :</td>
+              <td colspan="4" class="text-right bold">Total weight in KG :</td>
               <td class="text-center bold">{{ form.total_weight }}</td>
               <td colspan="3" class="text-right bold">Total:</td>
               <td class="text-center bold">{{ form.total_qty }}</td>
