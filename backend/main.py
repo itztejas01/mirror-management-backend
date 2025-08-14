@@ -664,7 +664,7 @@ async def generate_pdf(
         if len(additional_costs) > 0:
             additional_costs_data = [
                 {
-                    "name": cost.get("cost_type", {}).get("name", ""),
+                    "name": cost.get("cost_name"),
                     "amount": cost.get("amount", 0),
                 }
                 for cost in additional_costs
