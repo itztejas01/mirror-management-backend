@@ -307,6 +307,7 @@ async def get_stats(authenticated_client: Client = Depends(get_authenticated_cli
                     + timedelta(days=32)
                 ).replace(day=1),
             )
+            .eq("active", True)
             .execute()
         )
 
@@ -330,6 +331,7 @@ async def get_stats(authenticated_client: Client = Depends(get_authenticated_cli
                     + timedelta(days=32)
                 ).replace(day=1),
             )
+            .eq("active", True)
             .execute()
         )
 
@@ -352,6 +354,7 @@ async def get_stats(authenticated_client: Client = Depends(get_authenticated_cli
                 ).replace(day=1),
             )
             .eq("status", "pending")
+            .eq("active", True)
             .order("created_at", desc=True)
             .limit(10)
             .execute()
@@ -369,6 +372,7 @@ async def get_stats(authenticated_client: Client = Depends(get_authenticated_cli
             authenticated_client.table(SUPABASE_TABLES.orders)
             .select("*", count="exact")
             .eq("status", "delivered")  # Assuming there's a status field
+            .eq("active", True)
             .execute()
         )
 
@@ -394,6 +398,7 @@ async def get_stats(authenticated_client: Client = Depends(get_authenticated_cli
                         + timedelta(days=32)
                     ).replace(day=1),
                 )
+                .eq("active", True)
                 .execute()
             )
 
@@ -422,10 +427,12 @@ async def get_stats(authenticated_client: Client = Depends(get_authenticated_cli
         current_month_total = sum(
             float(f"{order['proforma_invoices']['grand_total']:.2f}")
             for order in current_month_orders.data
+            if order.get("status") != "cancelled"
         )
         previous_month_total = sum(
             float(f"{order['proforma_invoices']['grand_total']:.2f}")
             for order in previous_month_orders.data
+            if order.get("status") != "cancelled"
         )
 
         current_month_count = current_month_orders.count
