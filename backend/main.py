@@ -24,6 +24,8 @@ import re
 from supabase import Client
 from natsort import natsorted
 from math import ceil
+from openpyxl import Workbook
+from io import BytesIO
 
 
 # Initialize logging
@@ -279,6 +281,107 @@ async def size_sheet(
             headers={
                 "Content-Type": "application/pdf",
                 "Content-Disposition": f'attachment; filename="size_sheet_{customer_id}.pdf"',
+            },
+        )
+    except Exception as e:
+        print(e)
+        return failure_response(str(e), {}, 500)
+
+
+@app.get("/size-sheet-excel/{customer_id}")
+async def size_sheet_excel(
+    customer_id: str,
+    # payload: SizeSheetRequest,
+    # authenticated_client: Client = Depends(get_authenticated_client),
+):
+    raw_payload = {
+        "items": [
+            {
+                "customer_order_no": "1",
+                "product_name": "6 mm Plain + 12 mm Airgap + 6 mm Tuffan ",
+                "thickness": "24mm",
+                "size_width": 56,
+                "size_height": 133,
+                "size_width_fraction": "3/4",
+                "size_height_fraction": "11/16",
+                "width_rounding_value": 6,
+                "height_rounding_value": 6,
+                "unit": "inch",
+                "quantity": 8,
+                "weight": 1753.3858,
+                "note": "",
+            }
+        ],
+        "title": "Size Sheet",
+        "remarks": "",
+    }
+    payload = SizeSheetRequest(**raw_payload)
+    try:
+        # Prepare workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Size Sheet"
+
+        # Headers
+        headers = ["Sr No", "Customer Order No", "Size1", "Size2", "Qnt"]
+        ws.append(headers)
+
+        # Sort items by customer_order_no like PDF endpoint
+        items_sorted = natsorted(
+            payload.items, key=lambda it: (it.customer_order_no or "")
+        )
+
+        # Helper to build size strings
+        def build_size_str(value: float, fraction: str, unit: str) -> str:
+            unit_l = (unit or "ft").lower()
+            if unit_l == "inch":
+                whole = int(value) if value is not None else 0
+                frac = (fraction or "").strip()
+                return f"{whole} {frac}".strip()
+            return f"{value}" if value is not None else ""
+
+        # Fill rows
+        for idx, item in enumerate(items_sorted, start=1):
+            size1 = build_size_str(
+                item.size_width, item.size_width_fraction or "", item.unit
+            )
+            size2 = build_size_str(
+                item.size_height, item.size_height_fraction or "", item.unit
+            )
+            row = [
+                idx,
+                item.customer_order_no or "",
+                size1,
+                size2,
+                int(item.quantity or 0),
+            ]
+            ws.append(row)
+
+        # Autosize columns (simple heuristic)
+        for column_cells in ws.columns:
+            max_length = 0
+            col = column_cells[0].column_letter
+            for cell in column_cells:
+                try:
+                    cell_length = len(str(cell.value)) if cell.value is not None else 0
+                    if cell_length > max_length:
+                        max_length = cell_length
+                except Exception:
+                    pass
+            ws.column_dimensions[col].width = max(10, min(50, max_length + 2))
+
+        # Save to bytes
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        filename = f"size_sheet_{customer_id}.xlsx"
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Content-Disposition": f'attachment; filename="{filename}"',
             },
         )
     except Exception as e:
@@ -732,7 +835,7 @@ async def generate_pdf(
                 else "N/A"
             ),
             "delivery_date": (
-                convertDateToProperFormat(order_data.get("delivery_date", "N/A"))
+                convertDateToProperFormat(order_data.get("delivery_date"))
                 if order_data.get("delivery_date") is not None
                 else "N/A"
             ),

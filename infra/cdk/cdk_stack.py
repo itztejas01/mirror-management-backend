@@ -56,6 +56,7 @@ class CdkStack(Stack):
             binary_media_types=[
                 "application/pdf",
                 "application/octet-stream",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             ],
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=apigw.Cors.ALL_ORIGINS,
@@ -83,6 +84,13 @@ class CdkStack(Stack):
 
         # Create Lambda integration for PDF endpoints with binary support
         pdf_lambda_integration = apigw.LambdaIntegration(
+            mirror_lambda,
+            proxy=True,
+            content_handling=apigw.ContentHandling.CONVERT_TO_BINARY,
+        )
+
+        # Create Lambda integration for Excel endpoints with binary support
+        excel_lambda_integration = apigw.LambdaIntegration(
             mirror_lambda,
             proxy=True,
             content_handling=apigw.ContentHandling.CONVERT_TO_BINARY,
@@ -116,6 +124,23 @@ class CdkStack(Stack):
                 },
                 response_models={
                     "application/pdf": apigw.Model.EMPTY_MODEL,
+                },
+            )
+        ]
+
+        # Define method responses for Excel endpoints
+        excel_method_response = [
+            apigw.MethodResponse(
+                status_code="200",
+                response_parameters={
+                    "method.response.header.Access-Control-Allow-Headers": True,
+                    "method.response.header.Access-Control-Allow-Origin": True,
+                    "method.response.header.Access-Control-Allow-Methods": True,
+                    "method.response.header.Content-Type": True,
+                    "method.response.header.Content-Disposition": True,
+                },
+                response_models={
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": apigw.Model.EMPTY_MODEL,
                 },
             )
         ]
@@ -159,4 +184,13 @@ class CdkStack(Stack):
             "POST",
             pdf_lambda_integration,
             method_responses=pdf_method_response,
+        )
+
+        # Size sheet Excel endpoint (XLSX, POST)
+        size_sheet_excel = api.root.add_resource("size-sheet-excel")
+        size_sheet_excel_with_id = size_sheet_excel.add_resource("{customer_id}")
+        size_sheet_excel_with_id.add_method(
+            "POST",
+            excel_lambda_integration,
+            method_responses=excel_method_response,
         )
