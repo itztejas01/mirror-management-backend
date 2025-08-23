@@ -288,34 +288,12 @@ async def size_sheet(
         return failure_response(str(e), {}, 500)
 
 
-@app.get("/size-sheet-excel/{customer_id}")
+@app.post("/size-sheet-excel/{customer_id}")
 async def size_sheet_excel(
     customer_id: str,
-    # payload: SizeSheetRequest,
+    payload: SizeSheetRequest,
     # authenticated_client: Client = Depends(get_authenticated_client),
 ):
-    raw_payload = {
-        "items": [
-            {
-                "customer_order_no": "1",
-                "product_name": "6 mm Plain + 12 mm Airgap + 6 mm Tuffan ",
-                "thickness": "24mm",
-                "size_width": 56,
-                "size_height": 133,
-                "size_width_fraction": "3/4",
-                "size_height_fraction": "11/16",
-                "width_rounding_value": 6,
-                "height_rounding_value": 6,
-                "unit": "inch",
-                "quantity": 8,
-                "weight": 1753.3858,
-                "note": "",
-            }
-        ],
-        "title": "Size Sheet",
-        "remarks": "",
-    }
-    payload = SizeSheetRequest(**raw_payload)
     try:
         # Prepare workbook
         wb = Workbook()
